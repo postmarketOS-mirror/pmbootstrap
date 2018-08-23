@@ -113,6 +113,7 @@ chroot_host_path = os.environ["PATH"] + ":/usr/sbin/"
 # $WORK gets replaced with args.work
 # $ARCH gets replaced with the chroot architecture (eg. x86_64, armhf)
 chroot_mount_bind = {
+    "/dev/pts": "/dev/pts",
     "/proc": "/proc",
     "$WORK/cache_apk_$ARCH": "/var/cache/apk",
     "$WORK/cache_ccache_$ARCH": "/mnt/pmbootstrap-ccache",
@@ -140,6 +141,7 @@ chroot_device_nodes = [
     [666, "c", 1, 7, "full"],
     [644, "c", 1, 8, "random"],
     [644, "c", 1, 9, "urandom"],
+    [666, "c", 2, 5, "ptmx"],
 ]
 
 # Age in hours that we keep the APKINDEXes before downloading them again.
