@@ -21,6 +21,7 @@ source="
 	$pkgname-$_commit.tar.gz::https://github.com/linux-sunxi/linux-sunxi/archive/${_commit}.tar.gz
 	$_config
 	0001-compiler-gcc-integrate-the-various-compiler-gcc-345-.patch
+	00_fix_return_address.patch
 "
 builddir="$srcdir/linux-sunxi-${_commit}"
 
@@ -50,4 +51,5 @@ package() {
 
 sha512sums="0b2f0fdf67bfc714df5b3b12a3cb65e022b983c0c5dca1c6e8bbc6badf7485f8d005d5698ec8719eccb79ea8ce41294349473dd86293263e3eeabfbdf48351a3  linux-inet-inet1-d47d367036be38c5180632ec8a3ad169a4593a88.tar.gz
 0fc3f52bbcaa657b5f1065e712f3854b5be412b631e7c4ce1262f1473101dad6f892b2b0aaae367305c4430b56f7e576a5d135eef3da489cb4dd92f4943eb1d0  config-inet-inet1.armhf
-2955149c50e63ca1c496127aeba99ad3bf22f543cb11526c92677bcf8f77f851a20da34ac5bb3ce046710a4cd70f0101ed4abba775619ff8ea52de5f13b6118c  0001-compiler-gcc-integrate-the-various-compiler-gcc-345-.patch"
+2955149c50e63ca1c496127aeba99ad3bf22f543cb11526c92677bcf8f77f851a20da34ac5bb3ce046710a4cd70f0101ed4abba775619ff8ea52de5f13b6118c  0001-compiler-gcc-integrate-the-various-compiler-gcc-345-.patch
+ea1d3b5a234fa565e3c1a792de48f4fc4e6023d281d303c8e319c7ef28edc5739ab0e4dea0139a41f0a5c7d03e27921ccaa214fd0ac5c72245a094ce60128864  00_fix_return_address.patch"
