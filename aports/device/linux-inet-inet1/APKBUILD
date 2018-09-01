@@ -1,0 +1,53 @@
+# Kernel config based on: arch/arm/configs/lineageos_mako_defconfig
+
+pkgname="linux-inet-inet1"
+pkgver=3.4.104
+pkgrel=0
+pkgdesc="Linux 3.4 kernel from sunxi"
+arch="armhf"
+_carch="arm"
+_flavor="inet-inet1"
+url="https://github.com/linux-sunxi/linux-sunxi"
+license="GPL2"
+options="!strip !check !tracedeps"
+makedepends="perl sed installkernel bash gmp-dev bc linux-headers elfutils-dev"
+HOSTCC="${CC:-gcc}"
+HOSTCC="${HOSTCC#${CROSS_COMPILE}}"
+
+# Source
+_commit="d47d367036be38c5180632ec8a3ad169a4593a88"
+_config="config-${_flavor}.armhf"
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/linux-sunxi/linux-sunxi/archive/${_commit}.tar.gz
+	$_config
+	0001-compiler-gcc-integrate-the-various-compiler-gcc-345-.patch
+"
+builddir="$srcdir/linux-sunxi-${_commit}"
+
+prepare() {
+	default_prepare
+
+	# gcc6 support
+	#cp -v "$srcdir/compiler-gcc6.h" "$builddir/include/linux/"
+
+	cp "$srcdir"/$_config "$builddir"/.config
+	make ARCH="$_carch" HOSTCC="$HOSTCC" silentoldconfig
+}
+
+build() {
+	unset LDFLAGS
+	make ARCH="$_carch" CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-Alpine"
+}
+
+package() {
+	install -Dm644 "$builddir/arch/arm/boot/zImage" \
+		"$pkgdir/boot/vmlinuz-$_flavor"
+
+	install -D "$builddir/include/config/kernel.release" \
+		"$pkgdir/usr/share/kernel/$_flavor/kernel.release"
+}
+
+sha512sums="0b2f0fdf67bfc714df5b3b12a3cb65e022b983c0c5dca1c6e8bbc6badf7485f8d005d5698ec8719eccb79ea8ce41294349473dd86293263e3eeabfbdf48351a3  linux-inet-inet1-d47d367036be38c5180632ec8a3ad169a4593a88.tar.gz
+cf80d626bd5869903a62110092484789f8d3ffc21b85c9612a045336c4a7a687cca160e598c676deaa293b4b3ab7acfdc440dbb5650d7a396edf2466bbaedd73  config-inet-inet1.armhf
+2955149c50e63ca1c496127aeba99ad3bf22f543cb11526c92677bcf8f77f851a20da34ac5bb3ce046710a4cd70f0101ed4abba775619ff8ea52de5f13b6118c  0001-compiler-gcc-integrate-the-various-compiler-gcc-345-.patch"
