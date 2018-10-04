@@ -3,7 +3,7 @@ import sys
 import pmb.parse
 import pmb.helpers.logging
 import pmb.helpers.devices
-from pmb.api.structs import *
+from pmb.api.structs import DeviceInfo
 
 _args = None
 
