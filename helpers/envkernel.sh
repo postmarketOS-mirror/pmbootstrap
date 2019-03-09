@@ -42,9 +42,9 @@ export_pmbootstrap_dir() {
 	# See also: <https://stackoverflow.com/a/29835459>
 	# shellcheck disable=SC2039
 	if [ -n "${BASH_SOURCE[0]}" ]; then
-		script_dir="$(dirname "${BASH_SOURCE[0]}")"
+		script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 	else
-		script_dir="$(dirname "$1")"
+		script_dir="$(dirname "$(readlink -f "$1")")"
 	fi
 
 	# Fail with debug information
