@@ -109,7 +109,7 @@ class Qemu(object):
         ssh_create_askpass_script(args)
 
         # Create and run rootfs
-        pmbootstrap_yes(args, config, ["install", "--no-fde"])
+        pmbootstrap_yes(args, config, ["-t", "600", "install", "--no-fde"])
         self.process = pmbootstrap_run(args, config, ["qemu", "--display",
                                                       "none"], "background")
 
