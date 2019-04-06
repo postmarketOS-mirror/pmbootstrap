@@ -241,6 +241,7 @@ def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
         pmb.chroot.distccd.start(args, arch)
     if cross == "crossdirect":
         pmb.chroot.mount_native_into_foreign(args, suffix)
+        pmb.chroot.create_hostspec_lib_symlink(args, arch)
 
     return True
 

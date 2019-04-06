@@ -94,3 +94,27 @@ def copy_xauthority(args):
         pmb.helpers.run.root(args, ["rm", copy])
     pmb.helpers.run.root(args, ["cp", original, copy])
     pmb.chroot.root(args, ["chown", "pmos:pmos", "/home/pmos/.Xauthority"])
+
+
+def create_hostspec_lib_symlink(args, arch):
+    """
+    Create a /usr/armv6-alpine-linux-muslgnueabihf/lib -> /lib symlink in
+    buildroot_armhf as workaround for crossdirect bug pmaports#227.
+
+    In detail, this will get ld to find libraries in /lib, such as zlib. Due
+    to how crossdirect works, ld won't look into /lib by default. For all other
+    arches we can force it to look in /lib by passing -rpath-link in the
+    crossdirect binaries (see crossdirect.c). But since for armhf we have
+    another hostspec defined in abuild's arch_to_hostspec() function (which is
+    what we use to build the cross compiling toolchain) than what armhf is
+    really using in Alpine, the ld we have built will refuse to accept
+    -rpath-link or any other means of telling it where to look for libraries.
+    But it does look in the non-existing /usr/armv6-alpine-linux-muslgnueabihf/
+    lib dir by default, so the easiest way is to just make that point to /lib.
+    """
+    armhf_dir = (args.work + "/chroot_buildroot_armhf/usr/"
+                 "armv6-alpine-linux-muslgnueabihf")
+    if arch != "armhf" or os.path.exists(armhf_dir):
+        return
+    pmb.helpers.run.root(args, ["mkdir", armhf_dir])
+    pmb.helpers.run.root(args, ["ln", "-sv", "/lib", armhf_dir])
