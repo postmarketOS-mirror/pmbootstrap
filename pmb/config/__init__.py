@@ -45,7 +45,7 @@ pmaports_min_version = "4"
 # Version of the work folder (as asked during 'pmbootstrap init'). Increase
 # this number, whenever migration is required and provide the migration code,
 # see migrate_work_folder()).
-work_version = 3
+work_version = 4
 
 # Keys saved in the config file (mostly what we ask in 'pmbootstrap init')
 config_keys = ["ccache_size", "device", "extra_packages", "hostname", "jobs",

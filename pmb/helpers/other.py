@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with pmbootstrap.  If not, see <http://www.gnu.org/licenses/>.
 """
+import glob
 import logging
 import os
 import re
@@ -73,6 +74,24 @@ def check_binfmt_misc(args):
                        " module 'binfmt_misc'. This is required to run"
                        " foreign architecture programs with QEMU (eg."
                        " armhf on x86_64):\n See: <" + link + ">")
+
+
+def delete_apk(args, pkgname, version):
+    """
+    Remove a cached binary package for all arches.
+
+    :param pkgname: package name (e.g. "binutils-armhf")
+    :param version: $pkgver-r$pkgrel (e.g. "1.0.0-r2")
+    """
+    pattern = args.work + "/cache_apk_*/" + pkgname + "-" + version + ".*.apk"
+    matches = glob.glob(pattern)
+    logging.info("(native) Removing package: " + pkgname + "-" + version)
+    if not matches:
+        logging.info("(native) (Package not found, nothing to do.)")
+        return
+    for match in matches:
+        logging.info("(native) % rm " + match)
+        pmb.helpers.run.root(args, ["rm", match])
 
 
 def migrate_success(args, version):
@@ -153,6 +172,31 @@ def migrate_work_folder(args):
         # Update version file
         migrate_success(args, 3)
         current = 3
+
+    if current == 3:
+        logging.info("Changelog:")
+        logging.info("* armhf triplet was changed in abuild (pmaports#295)")
+        logging.info("Migration will do the following:")
+        logging.info("* Zap your chroots")
+        logging.info("* Delete invalid armhf packages from cache")
+        logging.info("Note:")
+        logging.info("* If you are getting strange compiling errors when")
+        logging.info("  compiling to armhf (and other arches work fine!),")
+        logging.info("  then the invalid packages are probably still")
+        logging.info("  cached in your network. In that case, ask in the chat")
+        logging.info("  for advice: https://postmarketos.org/chat")
+        if not pmb.helpers.cli.confirm(args):
+            raise RuntimeError("Aborted.")
+
+        pmb.chroot.zap(args, False)
+        delete_apk(args, "binutils-armhf", "2.31.1-r2")
+        delete_apk(args, "busybox-static-armhf", "1.30.1-r2")
+        delete_apk(args, "gcc-armhf", "8.3.0-r0")
+        delete_apk(args, "gcc4-armhf", "9999-r1")
+        delete_apk(args, "gcc6-armhf", "9999-r6")
+        delete_apk(args, "musl-armhf", "1.1.22-r2")
+        migrate_success(args, 4)
+        current = 4
 
     # Can't migrate, user must delete it
     if current != required:
