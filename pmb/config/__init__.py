@@ -182,6 +182,11 @@ necessary_kconfig_options = {
             "USE_VFB": False,
         }
     },
+    ">=3.9": {
+        "all": {
+            "FW_LOADER_USER_HELPER": True,
+        }
+    },
     ">=4.0.0": {
         "all": {
             "UEVENT_HELPER": True,
