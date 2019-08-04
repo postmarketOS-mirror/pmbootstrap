@@ -6,8 +6,12 @@ import pmb.chroot
 
 
 def format_and_mount_boot(args):
+    boot_num = 1
+    if args.deviceinfo["sd_embed_firmware"]:
+        boot_num = len(args.deviceinfo["sd_embed_firmware"].split(',')) + 1
+
     mountpoint = "/mnt/install/boot"
-    device = "/dev/installp1"
+    device = "/dev/installp{}".format(boot_num)
     filesystem = args.deviceinfo["boot_filesystem"] or "ext2"
     logging.info("(native) format " + device + " (boot, " + filesystem + "), mount to " +
                  mountpoint)
@@ -24,8 +28,12 @@ def format_and_mount_boot(args):
 
 
 def format_and_mount_root(args):
+    rootfs_num = 2
+    if args.deviceinfo["sd_embed_firmware"]:
+        rootfs_num = len(args.deviceinfo["sd_embed_firmware"].split(',')) + 2
+
     mountpoint = "/dev/mapper/pm_crypt"
-    device = "/dev/installp2"
+    device = "/dev/installp{}".format(rootfs_num)
     if args.full_disk_encryption:
         logging.info("(native) format " + device + " (root, luks), mount to " +
                      mountpoint)
@@ -46,7 +54,11 @@ def format_and_mount_pm_crypt(args):
     if args.full_disk_encryption:
         device = "/dev/mapper/pm_crypt"
     else:
-        device = "/dev/installp2"
+        rootfs_num = 2
+        if args.deviceinfo["sd_embed_firmware"]:
+            rootfs_num = len(args.deviceinfo["sd_embed_firmware"].split(',')) + 2
+
+        device = "/dev/installp{}".format(rootfs_num)
 
     # Format
     if not args.rsync:

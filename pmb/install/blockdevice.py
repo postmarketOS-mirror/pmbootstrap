@@ -19,9 +19,14 @@ def previous_install(args):
     for blockdevice_outside in [args.sdcard + "1", args.sdcard + "p1"]:
         if not os.path.exists(blockdevice_outside):
             continue
-        blockdevice_inside = "/dev/sdcardp1"
+
+        partition_count = len(glob.glob(blockdevice_outside[:-1] + "*")) - 1
+
+        # The boot partition is the second to last partition
+        blockdevice_outside = blockdevice_outside[:-1] + str(partition_count - 1)
+        blockdevice_inside = "/dev/sdcardp{}".format(partition_count - 1)
         pmb.helpers.mount.bind_file(args, blockdevice_outside,
-                                    args.work + "/chroot_native" + blockdevice_inside)
+                                           args.work + "/chroot_native" + blockdevice_inside)
         label = pmb.chroot.root(args, ["blkid", "-s", "LABEL", "-o", "value",
                                        blockdevice_inside], output_return=True)
         pmb.helpers.run.root(args, ["umount", args.work + "/chroot_native" + blockdevice_inside])
@@ -99,8 +104,12 @@ def create_and_mount_image(args, size_boot, size_root):
     # Mount to /dev/install
     mount_image_paths = {img_path_full: "/dev/install"}
     if args.split:
-        mount_image_paths = {img_path_boot: "/dev/installp1",
-                             img_path_root: "/dev/installp2"}
+        boot_num = 1
+        if args.deviceinfo["sd_embed_firmware"]:
+            boot_num = len(args.deviceinfo["sd_embed_firmware"].split(',')) + 1
+
+        mount_image_paths = {img_path_boot: "/dev/installp{}".format(boot_num),
+                             img_path_root: "/dev/installp{}".format(boot_num + 1)}
 
     for img_path, mount_point in mount_image_paths.items():
         logging.info("(native) mount " + mount_point +
