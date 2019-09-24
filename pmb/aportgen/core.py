@@ -190,7 +190,12 @@ def get_upstream_aport(args, pkgname):
     split = aport_path.split("/")
     repo = split[-2]
     pkgname = split[-1]
-    index_path = pmb.helpers.repo.alpine_apkindex_path(args, repo)
+    arch = (args.arch_native
+            if "noarch" in apkbuild["arch"] or
+            "all" in apkbuild["arch"] or
+            args.arch_native in apkbuild["arch"]
+            else apkbuild["arch"][0])
+    index_path = pmb.helpers.repo.alpine_apkindex_path(args, repo, arch)
     package = pmb.parse.apkindex.package(args, pkgname, indexes=[index_path])
 
     # Compare version (return when equal)
