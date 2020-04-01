@@ -166,7 +166,7 @@ def replace_aports_packages_with_path(args, packages, suffix, arch):
                         package + "-" + data_repo["version"] + ".apk")
             if os.path.exists(args.work + "/chroot_" + suffix + apk_path):
                 package = apk_path
-        ret.append(package)
+                ret.append(package)
     return ret
 
 
@@ -216,7 +216,7 @@ def install(args, packages, suffix="native", build=True):
     # Use a virtual package to mark only the explicitly requested packages as
     # explicitly installed, not their dependencies or specific paths (#1212)
     commands = [["add"] + packages]
-    if packages != packages_todo:
+    if len(packages_todo) > 0:
         commands = [["add", "-u", "--virtual", ".pmbootstrap"] + packages_todo,
                     ["add"] + packages,
                     ["del", ".pmbootstrap"]]
