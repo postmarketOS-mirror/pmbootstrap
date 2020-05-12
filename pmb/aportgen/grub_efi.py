@@ -66,6 +66,6 @@ def generate(args, pkgname):
             }}
         """
         for line in apkbuild.split("\n"):
-            handle.write(line[12:] + "\n")
+            handle.write(line[12:].replace(" " * 4, "\t") + "\n")
 
         handle.write("sha512sums=\"" + hashes.rstrip() + "\"\n")
