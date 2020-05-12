@@ -163,6 +163,19 @@ def get_upstream_aport(args, pkgname):
     pmb.helpers.git.clone(args, "aports_upstream")
     aports_upstream_path = args.work + "/cache_git/aports_upstream"
 
+    # Checkout branch
+    channel_cfg = pmb.config.pmaports.read_config_channel(args)
+    branch = channel_cfg["branch_aports"]
+    logging.info(f"Checkout aports.git branch: {branch}")
+    if pmb.helpers.run.user(args, ["git", "checkout", branch],
+                            aports_upstream_path, check=False):
+        logging.info("NOTE: run 'pmbootstrap pull' and try again")
+        logging.info("NOTE: if it still fails, your aports.git was cloned with"
+                     " an older version of pmbootstrap, as shallow clone."
+                     " Unshallow it, or remove it and let pmbootstrap clone it"
+                     f" again: {aports_upstream_path}")
+        raise RuntimeError("Branch checkout failed.")
+
     # Search package
     paths = glob.glob(aports_upstream_path + "/*/" + pkgname)
     if len(paths) > 1:
