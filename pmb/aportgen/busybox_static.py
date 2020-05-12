@@ -44,19 +44,17 @@ def generate(args, pkgname):
     # Write the APKBUILD
     pmb.helpers.run.user(args, ["mkdir", "-p", args.work + "/aportgen"])
     with open(args.work + "/aportgen/APKBUILD", "w", encoding="utf-8") as handle:
-        # Variables
-        handle.write("# Automatically generated aport, do not edit!\n"
-                     "# Generator: pmbootstrap aportgen " + pkgname + "\n"
-                     "\n"
-                     "pkgname=" + pkgname + "\n"
-                     "pkgver=" + pkgver + "\n"
-                     "pkgrel=" + pkgrel + "\n"
-                     "\n"
-                     "_arch=\"" + arch + "\"\n"
-                     "_mirror=\"" + args.mirror_alpine + "\"\n"
-                     )
-        # Static part
-        static = """
+        apkbuild = f"""\
+            # Automatically generated aport, do not edit!
+            # Generator: pmbootstrap aportgen {pkgname}
+
+            pkgname={pkgname}
+            pkgver={pkgver}
+            pkgrel={pkgrel}
+
+            _arch="{arch}"
+            _mirror="{args.mirror_alpine}"
+
             url="http://busybox.net"
             license="GPL2"
             arch="all"
@@ -68,14 +66,14 @@ def generate(args, pkgname):
                 busybox-static-$pkgver-r$pkgrel-$_arch.apk::$_mirror/edge/main/$_arch/busybox-static-$pkgver-r$pkgrel.apk
             "
 
-            package() {
+            package() {{
                 mkdir -p "$pkgdir/usr/$_target"
                 cd "$pkgdir/usr/$_target"
                 tar -xf $srcdir/busybox-static-$pkgver-r$pkgrel-$_arch.apk
                 rm .PKGINFO .SIGN.*
-            }
+            }}
         """
-        for line in static.split("\n"):
+        for line in apkbuild.split("\n"):
             handle.write(line[12:] + "\n")
 
         # Hashes
