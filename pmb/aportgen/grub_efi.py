@@ -39,6 +39,9 @@ def generate(args, pkgname):
                              "buildroot_" + arch, "/var/cache/distfiles",
                              output_return=True)
 
+    # Write the APKBUILD
+    channel_cfg = pmb.config.pmaports.read_config_channel(args)
+    mirrordir = channel_cfg["mirrordir_alpine"]
     pmb.helpers.run.user(args, ["mkdir", "-p", args.work + "/aportgen"])
     with open(args.work + "/aportgen/APKBUILD", "w", encoding="utf-8") as handle:
         apkbuild = f"""\
@@ -56,7 +59,7 @@ def generate(args, pkgname):
             url="https://www.gnu.org/software/grub/"
             license="GPL-3.0-or-later"
             arch="all"
-            source="grub-efi-$pkgver-r$pkgrel-$_arch.apk::$_mirror/edge/main/$_arch/grub-efi-$pkgver-r$pkgrel.apk"
+            source="grub-efi-$pkgver-r$pkgrel-$_arch.apk::$_mirror/{mirrordir}/main/$_arch/grub-efi-$pkgver-r$pkgrel.apk"
 
             package() {{
                 mkdir -p "$pkgdir"
