@@ -42,6 +42,8 @@ def generate(args, pkgname):
                              output_return=True)
 
     # Write the APKBUILD
+    channel_cfg = pmb.config.pmaports.read_config_channel(args)
+    mirrordir = channel_cfg["mirrordir_alpine"]
     pmb.helpers.run.user(args, ["mkdir", "-p", args.work + "/aportgen"])
     with open(args.work + "/aportgen/APKBUILD", "w", encoding="utf-8") as handle:
         apkbuild = f"""\
@@ -68,7 +70,7 @@ def generate(args, pkgname):
             _target="$(arch_to_hostspec $_arch)"
 
             source="
-                busybox-static-$pkgver-r$pkgrel-$_arch.apk::$_mirror/edge/main/$_arch/busybox-static-$pkgver-r$pkgrel.apk
+                busybox-static-$pkgver-r$pkgrel-$_arch.apk::$_mirror/{mirrordir}/main/$_arch/busybox-static-$pkgver-r$pkgrel.apk
             "
 
             package() {{
