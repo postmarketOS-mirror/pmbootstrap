@@ -48,6 +48,11 @@ def generate(args, pkgname):
             # Automatically generated aport, do not edit!
             # Generator: pmbootstrap aportgen {pkgname}
 
+            # Stub for apkbuild-lint
+            if [ -z "$(type -t arch_to_hostspec)" ]; then
+                arch_to_hostspec() {{ :; }}
+            fi
+
             pkgname={pkgname}
             pkgver={pkgver}
             pkgrel={pkgrel}
@@ -74,7 +79,7 @@ def generate(args, pkgname):
             }}
         """
         for line in apkbuild.split("\n"):
-            handle.write(line[12:] + "\n")
+            handle.write(line[12:].replace(" " * 4, "\t") + "\n")
 
         # Hashes
         handle.write("sha512sums=\"" + hashes.rstrip() + "\"\n")
