@@ -21,15 +21,13 @@ def get_path(args, name_repo):
     return args.work + "/cache_git/" + name_repo
 
 
-def clone(args, name_repo, shallow=True):
+def clone(args, name_repo):
     """ Clone a git repository to $WORK/cache_git/$name_repo (or to the
         overridden path set in args, as with pmbootstrap --aports).
 
         :param name_repo: short alias used for the repository name, from
                           pmb.config.git_repos (e.g. "aports_upstream",
-                          "pmaports")
-        :param shallow: only clone the last revision of the repository, instead
-                        of the entire repository (faster, saves bandwith) """
+                          "pmaports") """
     # Check for repo name in the config
     if name_repo not in pmb.config.git_repos:
         raise ValueError("No git repository configured for " + name_repo)
@@ -39,8 +37,6 @@ def clone(args, name_repo, shallow=True):
         # Build git command
         url = pmb.config.git_repos[name_repo]
         command = ["git", "clone"]
-        if shallow:
-            command += ["--depth=1"]
         command += [url, path]
 
         # Create parent dir and clone
