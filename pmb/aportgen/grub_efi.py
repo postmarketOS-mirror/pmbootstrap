@@ -41,31 +41,31 @@ def generate(args, pkgname):
 
     pmb.helpers.run.user(args, ["mkdir", "-p", args.work + "/aportgen"])
     with open(args.work + "/aportgen/APKBUILD", "w", encoding="utf-8") as handle:
-        handle.write("# Automatically generated aport, do not edit!\n"
-                     "# Generator: pmbootstrap aportgen " + pkgname + "\n"
-                     "\n"
-                     "pkgname=" + pkgname + "\n"
-                     "pkgver=" + pkgver + "\n"
-                     "pkgrel=" + pkgrel + "\n"
-                     "\n"
-                     "_arch=\"" + arch + "\"\n"
-                     "_mirror=\"" + args.mirror_alpine + "\"\n"
-                     )
-        static = """
+        apkbuild = f"""\
+            # Automatically generated aport, do not edit!
+            # Generator: pmbootstrap aportgen {pkgname}
+
+            pkgname={pkgname}
+            pkgver={pkgver}
+            pkgrel={pkgrel}
+
+            _arch="{arch}"
+            _mirror="{args.mirror_alpine}"
+
             pkgdesc="GRUB $_arch EFI files for every architecture"
             url="https://www.gnu.org/software/grub/"
             license="GPL-3.0-or-later"
             arch="all"
             source="grub-efi-$pkgver-r$pkgrel-$_arch.apk::$_mirror/edge/main/$_arch/grub-efi-$pkgver-r$pkgrel.apk"
 
-            package() {
+            package() {{
                 mkdir -p "$pkgdir"
                 cd "$pkgdir"
                 tar -xf "$srcdir/grub-efi-$pkgver-r$pkgrel-$_arch.apk"
                 rm .PKGINFO .SIGN.*
-            }
+            }}
         """
-        for line in static.split("\n"):
+        for line in apkbuild.split("\n"):
             handle.write(line[12:] + "\n")
 
         handle.write("sha512sums=\"" + hashes.rstrip() + "\"\n")
