@@ -101,10 +101,8 @@ def test_get_upstream_remote(args, monkeypatch, tmpdir):
     run_git(["init", "."])
     run_git(["commit", "--allow-empty", "-m", "commit on master"])
 
-    # No upstream remote
-    with pytest.raises(RuntimeError) as e:
-        func(args, name_repo)
-    assert "could not find remote name for URL" in str(e.value)
+    # Missing upstream remote, fall back to "origin"
+    assert func(args, name_repo) == "origin"
 
     run_git(["remote", "add", "hello", url])
     assert func(args, name_repo) == "hello"

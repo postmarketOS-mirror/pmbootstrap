@@ -97,8 +97,11 @@ def get_upstream_remote(args, name_repo):
     for line in output.split("\n"):
         if url in line:
             return line.split("\t", 1)[0]
-    raise RuntimeError("{}: could not find remote name for URL '{}' in git"
-                       " repository: {}".format(name_repo, url, path))
+
+    # Fallback (e.g. when pmaports CI clones a different URL as origin)
+    logging.verbose(f"{name_repo}: could not find remote name for URL '{url}',"
+                    f" assuming 'origin'")
+    return "origin"
 
 
 def parse_channels_cfg(args):
