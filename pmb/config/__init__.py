@@ -8,6 +8,7 @@ import os
 #
 from pmb.config.load import load
 from pmb.config.save import save
+from pmb.config.xdg import get_xdg_config_home
 from pmb.config.merge_with_args import merge_with_args
 
 
@@ -65,7 +66,7 @@ defaults = {
     # aes-xts-plain64 would be better, but this is not supported on LineageOS
     # kernel configs
     "cipher": "aes-cbc-plain64",
-    "config": os.path.expanduser("~") + "/.config/pmbootstrap.cfg",
+    "config": os.path.join(get_xdg_config_home(), "pmbootstrap.cfg"),
     "device": "qemu-amd64",
     "extra_packages": "none",
     "fork_alpine": False,
