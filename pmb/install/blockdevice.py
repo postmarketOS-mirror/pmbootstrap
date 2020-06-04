@@ -54,13 +54,15 @@ def mount_sdcard(args):
             raise RuntimeError("Aborted.")
 
 
-def create_and_mount_image(args, size_boot, size_root):
+def create_and_mount_image(args, size_boot, size_root, split=False):
     """
     Create a new image file, and mount it as /dev/install.
 
     :param size_boot: size of the boot partition in bytes
     :param size_root: size of the root partition in bytes
+    :param split: create separate images for boot and root partitions
     """
+
     # Short variables for paths
     chroot = args.work + "/chroot_native"
     img_path_prefix = "/home/pmos/rootfs/" + args.device
@@ -89,7 +91,7 @@ def create_and_mount_image(args, size_boot, size_root):
     size_mb_boot = str(round(size_boot / (1024**2))) + "M"
     size_mb_root = str(round(size_root / (1024**2))) + "M"
     images = {img_path_full: size_mb_full}
-    if args.split:
+    if split:
         images = {img_path_boot: size_mb_boot,
                   img_path_root: size_mb_root}
     for img_path, size_mb in images.items():
@@ -98,7 +100,7 @@ def create_and_mount_image(args, size_boot, size_root):
 
     # Mount to /dev/install
     mount_image_paths = {img_path_full: "/dev/install"}
-    if args.split:
+    if split:
         mount_image_paths = {img_path_boot: "/dev/installp1",
                              img_path_root: "/dev/installp2"}
 
@@ -123,4 +125,4 @@ def create(args, size_boot, size_root):
     if args.sdcard:
         mount_sdcard(args)
     else:
-        create_and_mount_image(args, size_boot, size_root)
+        create_and_mount_image(args, size_boot, size_root, args.split)
