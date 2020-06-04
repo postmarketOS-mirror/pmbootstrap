@@ -25,6 +25,7 @@ import pmb.helpers.run
 import pmb.helpers.aportupgrade
 import pmb.helpers.status
 import pmb.install
+import pmb.install.blockdevice
 import pmb.parse
 import pmb.qemu
 
@@ -131,6 +132,13 @@ def chroot(args):
         pmb.chroot.other.copy_xauthority(args)
         env["DISPLAY"] = os.environ.get("DISPLAY")
         env["XAUTHORITY"] = "/home/pmos/.Xauthority"
+
+    # Install blockdevice
+    if args.install_blockdev:
+        size_boot = 128 * 1024 * 1024  # 128 MB
+        size_root = 4096 * 1024 * 1024  # 4 GB
+        pmb.install.blockdevice.create_and_mount_image(args, size_boot,
+                                                       size_root)
 
     # Run the command as user/root
     if args.user:

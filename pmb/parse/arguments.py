@@ -497,6 +497,10 @@ def arguments():
                         help="Copy .Xauthority and set environment variables,"
                              " so X11 applications can be started (native"
                              " chroot only)")
+    chroot.add_argument("-i", "--install-blockdev", action="store_true",
+                        help="Create a sparse image file and mount it as"
+                              " /dev/install, just like during the"
+                              " installation process.")
     for action in [build_init, chroot]:
         suffix = action.add_mutually_exclusive_group()
         if action == chroot:
