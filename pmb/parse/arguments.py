@@ -557,6 +557,11 @@ def arguments():
     install.add_argument("--no-base",
                          help="do not install postmarketos-base (advanced)",
                          action="store_false", dest="install_base")
+    install.add_argument("--on-device-installer", "--ondev",
+                         action="store_true",
+                         help="wrap the resulting image in a graphical"
+                              " on-device installer, so the installation can"
+                              " be customized after flashing")
     group = install.add_mutually_exclusive_group()
     group.add_argument("--sparse", help="generate sparse image file"
                        " (even if unsupported by device)", default=None,

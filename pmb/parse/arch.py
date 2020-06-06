@@ -25,7 +25,7 @@ def alpine_native():
 def from_chroot_suffix(args, suffix):
     if suffix == "native":
         return args.arch_native
-    if suffix == "rootfs_" + args.device:
+    if suffix in [f"rootfs_{args.device}", f"installer_{args.device}"]:
         return args.deviceinfo["arch"]
     if suffix.startswith("buildroot_"):
         return suffix.split("_", 1)[1]

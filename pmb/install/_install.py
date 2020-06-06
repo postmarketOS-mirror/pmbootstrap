@@ -11,6 +11,7 @@ import pmb.chroot.apk
 import pmb.chroot.other
 import pmb.chroot.initfs
 import pmb.config
+import pmb.config.pmaports
 import pmb.helpers.devices
 import pmb.helpers.run
 import pmb.install.blockdevice
@@ -500,6 +501,56 @@ def install_recovery_zip(args):
     logging.info("<https://postmarketos.org/recoveryzip>")
 
 
+def install_on_device_installer(args, step, steps):
+    # Generate the rootfs image
+    suffix_rootfs = f"rootfs_{args.device}"
+    install_system_image(args, 0, suffix_rootfs, step=step, steps=steps,
+                         split=True)
+    step += 2
+
+    # Prepare the installer chroot
+    logging.info(f"*** ({step}/{steps}) CREATE ON-DEVICE INSTALLER ROOTFS ***")
+    step += 1
+    packages = ([f"device-{args.device}",
+                 "postmarketos-ondev"] +
+                get_kernel_package(args, args.device) +
+                get_nonfree_packages(args, args.device))
+    suffix_installer = f"installer_{args.device}"
+    pmb.chroot.apk.install(args, packages, suffix_installer)
+
+    # Move rootfs image into installer chroot
+    img = f"{args.device}-root.img"
+    img_path_src = f"{args.work}/chroot_native/home/pmos/rootfs/{img}"
+    img_path_dest = f"{args.work}/chroot_{suffix_installer}/var/lib/rootfs.img"
+    logging.info(f"({suffix_installer}) add {img} as /var/lib/rootfs.img")
+    pmb.install.losetup.umount(args, img_path_src)
+    pmb.helpers.run.root(args, ["mv", img_path_src, img_path_dest])
+
+    # Run ondev-prepare, so it may generate nice configs from the channel
+    # properties (e.g. to display the version number), or transform the image
+    # file into another format. This can all be done without pmbootstrap
+    # changes in the postmarketos-ondev package.
+    logging.info(f"({suffix_installer}) ondev-prepare-image")
+    channel = pmb.config.pmaports.read_config(args)["channel"]
+    channel_cfg = pmb.config.pmaports.read_config_channel(args)
+    pmb.chroot.root(args, ["ondev-prepare", channel,
+                           channel_cfg["description"],
+                           channel_cfg["branch_pmaports"],
+                           channel_cfg["branch_aports"],
+                           channel_cfg["mirrordir_alpine"]], suffix_installer)
+
+    # Remove $DEVICE-boot.img (we will generate a new one if --split was
+    # specified, otherwise the separate boot image is not needed)
+    img_boot = f"{args.device}-boot.img"
+    logging.info(f"(native) rm {img_boot}")
+    pmb.chroot.root(args, ["rm", f"/home/pmos/rootfs/{img_boot}"])
+
+    # Generate installer image
+    size_reserve = round(os.path.getsize(img_path_dest) / 1024 / 1024) + 200
+    install_system_image(args, size_reserve, suffix_installer, "pmOS_install",
+                         step, steps, args.split, args.sdcard)
+
+
 def install(args):
     # Sanity checks
     if not args.android_recovery_zip and args.sdcard:
@@ -510,6 +561,8 @@ def install(args):
         steps = 2
     elif args.android_recovery_zip:
         steps = 4
+    elif args.on_device_installer:
+        steps = 8
     else:
         steps = 5
 
@@ -572,6 +625,10 @@ def install(args):
     elif args.android_recovery_zip:
         return install_recovery_zip(args)
 
-    install_system_image(args, 0, f"rootfs_{args.device}", split=args.split,
-                         sdcard=args.sdcard)
-    print_flash_info(args)
+    if args.on_device_installer:
+        # Runs install_system_image twice
+        install_on_device_installer(args, 3, steps)
+    else:
+        install_system_image(args, 0, f"rootfs_{args.device}",
+                             split=args.split, sdcard=args.sdcard)
+    print_flash_info(args, steps)

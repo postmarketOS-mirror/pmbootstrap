@@ -53,6 +53,7 @@ def zap(args, confirm=True, dry=False, pkgs_local=False, http=False,
     patterns = [
         "chroot_native",
         "chroot_buildroot_*",
+        "chroot_installer_*",
         "chroot_rootfs_*",
     ]
     if pkgs_local:

@@ -204,6 +204,24 @@ def install(args):
     if args.rsync and not args.sdcard:
         raise ValueError("Installation using rsync only works on sdcard.")
 
+    # On-device installer checks
+    # Note that this can't be in the mutually exclusive group that has most of
+    # the conflicting options, because then it would not work with --sdcard.
+    if args.on_device_installer:
+        if args.full_disk_encryption:
+            raise ValueError("--on-device-installer cannot be combined with"
+                             " --fde. The user can choose to encrypt their"
+                             " installation later in the on-device installer.")
+        if args.android_recovery_zip:
+            raise ValueError("--on-device-installer cannot be combined with"
+                             " --android-recovery-zip (patches welcome)")
+        if args.no_image:
+            raise ValueError("--on-device-installer cannot be combined with"
+                             " --no-image")
+        if args.rsync:
+            raise ValueError("--on-device-installer cannot be combined with"
+                             " --rsync")
+
     if not args.sdcard and args.split is None:
         # Default to split if the flash method requires it
         flasher = pmb.config.flashers.get(args.deviceinfo["flash_method"], {})
