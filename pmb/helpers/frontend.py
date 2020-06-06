@@ -135,8 +135,8 @@ def chroot(args):
 
     # Install blockdevice
     if args.install_blockdev:
-        size_boot = 128 * 1024 * 1024  # 128 MB
-        size_root = 4096 * 1024 * 1024  # 4 GB
+        size_boot = 128  # 128 MB
+        size_root = 4096  # 4 GB
         pmb.install.blockdevice.create_and_mount_image(args, size_boot,
                                                        size_root)
 

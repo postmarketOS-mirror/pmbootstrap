@@ -45,10 +45,10 @@ def partition(args, size_boot):
     """
     Partition /dev/install and create /dev/install{p1,p2}
 
-    size_boot: size of the boot partition in bytes.
+    size_boot: size of the boot partition in MB
     """
     # Convert to MB and print info
-    mb_boot = str(round(size_boot / 1024 / 1024)) + "M"
+    mb_boot = str(round(size_boot)) + "M"
     logging.info("(native) partition /dev/install (boot: " + mb_boot +
                  ", root: the rest)")
 

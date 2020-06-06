@@ -34,17 +34,17 @@ def get_subpartitions_size(args):
     Calculate the size of the boot and root subpartition.
 
     :returns: (boot, root) the size of the boot and root
-              partition as integer in bytes
+              partition as integer in MB
     """
-    boot = int(args.boot_size) * 1024 * 1024
+    boot = int(args.boot_size)
 
     # Estimate root partition size, then add some free space. The size
     # calculation is not as trivial as one may think, and depending on the
     # file system etc it seems to be just impossible to get it right.
     chroot = args.work + "/chroot_rootfs_" + args.device
-    root = pmb.helpers.other.folder_size(args, chroot)
+    root = pmb.helpers.other.folder_size(args, chroot) / 1024 / 1024
     root *= 1.20
-    root += 50 * 1024 * 1024
+    root += 50
     return (boot, root)
 
 

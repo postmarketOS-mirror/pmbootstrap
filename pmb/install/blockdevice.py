@@ -58,8 +58,8 @@ def create_and_mount_image(args, size_boot, size_root, split=False):
     """
     Create a new image file, and mount it as /dev/install.
 
-    :param size_boot: size of the boot partition in bytes
-    :param size_root: size of the root partition in bytes
+    :param size_boot: size of the boot partition in MB
+    :param size_root: size of the root partition in MB
     :param split: create separate images for boot and root partitions
     """
 
@@ -79,7 +79,7 @@ def create_and_mount_image(args, size_boot, size_root, split=False):
             pmb.chroot.root(args, ["rm", img_path])
 
     # Make sure there is enough free space
-    size_mb = round((size_boot + size_root) / (1024**2))
+    size_mb = round(size_boot + size_root)
     disk_data = os.statvfs(args.work)
     free = round((disk_data.f_bsize * disk_data.f_bavail) / (1024**2))
     if size_mb > free:
@@ -88,8 +88,8 @@ def create_and_mount_image(args, size_boot, size_root, split=False):
     # Create empty image files
     pmb.chroot.user(args, ["mkdir", "-p", "/home/pmos/rootfs"])
     size_mb_full = str(size_mb) + "M"
-    size_mb_boot = str(round(size_boot / (1024**2))) + "M"
-    size_mb_root = str(round(size_root / (1024**2))) + "M"
+    size_mb_boot = str(round(size_boot)) + "M"
+    size_mb_root = str(round(size_root)) + "M"
     images = {img_path_full: size_mb_full}
     if split:
         images = {img_path_boot: size_mb_boot,
@@ -117,8 +117,8 @@ def create(args, size_boot, size_root):
     """
     Create /dev/install (the "install blockdevice").
 
-    :param size_boot: size of the boot partition in bytes
-    :param size_root: size of the root partition in bytes
+    :param size_boot: size of the boot partition in MB
+    :param size_root: size of the root partition in MB
     """
     pmb.helpers.mount.umount_all(
         args, args.work + "/chroot_native/dev/install")
