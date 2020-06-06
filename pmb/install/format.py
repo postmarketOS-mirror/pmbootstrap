@@ -23,9 +23,11 @@ def format_and_mount_boot(args):
     pmb.chroot.root(args, ["mount", device, mountpoint])
 
 
-def format_and_mount_root(args):
+def format_and_mount_root(args, device):
+    """
+    :param device: root partition on install block device (e.g. /dev/installp2)
+    """
     mountpoint = "/dev/mapper/pm_crypt"
-    device = "/dev/installp2"
     if args.full_disk_encryption:
         logging.info("(native) format " + device + " (root, luks), mount to " +
                      mountpoint)
@@ -41,12 +43,13 @@ def format_and_mount_root(args):
             raise RuntimeError("Failed to open cryptdevice!")
 
 
-def format_and_mount_pm_crypt(args):
+def format_and_mount_pm_crypt(args, device):
+    """
+    :param device: root partition on install block device (e.g. /dev/installp2)
+    """
     # Block device
     if args.full_disk_encryption:
         device = "/dev/mapper/pm_crypt"
-    else:
-        device = "/dev/installp2"
 
     # Format
     if not args.rsync:
@@ -72,7 +75,11 @@ def format_and_mount_pm_crypt(args):
     pmb.chroot.root(args, ["mount", device, mountpoint])
 
 
-def format(args):
-    format_and_mount_root(args)
-    format_and_mount_pm_crypt(args)
+def format(args, size_reserve):
+    """
+    :param size_reserve: empty partition between root and boot in MB (pma#463)
+    """
+    root_dev = "/dev/installp3" if size_reserve else "/dev/installp2"
+    format_and_mount_root(args, root_dev)
+    format_and_mount_pm_crypt(args, root_dev)
     format_and_mount_boot(args)

@@ -54,12 +54,14 @@ def mount_sdcard(args):
             raise RuntimeError("Aborted.")
 
 
-def create_and_mount_image(args, size_boot, size_root, split=False):
+def create_and_mount_image(args, size_boot, size_root, size_reserve,
+                           split=False):
     """
     Create a new image file, and mount it as /dev/install.
 
     :param size_boot: size of the boot partition in MB
     :param size_root: size of the root partition in MB
+    :param size_reserve: empty partition between root and boot in MB (pma#463)
     :param split: create separate images for boot and root partitions
     """
 
@@ -79,7 +81,7 @@ def create_and_mount_image(args, size_boot, size_root, split=False):
             pmb.chroot.root(args, ["rm", img_path])
 
     # Make sure there is enough free space
-    size_mb = round(size_boot + size_root)
+    size_mb = round(size_boot + size_reserve + size_root)
     disk_data = os.statvfs(args.work)
     free = round((disk_data.f_bsize * disk_data.f_bavail) / (1024**2))
     if size_mb > free:
@@ -113,16 +115,18 @@ def create_and_mount_image(args, size_boot, size_root, split=False):
                                     args.work + "/chroot_native" + mount_point)
 
 
-def create(args, size_boot, size_root):
+def create(args, size_boot, size_root, size_reserve):
     """
     Create /dev/install (the "install blockdevice").
 
     :param size_boot: size of the boot partition in MB
     :param size_root: size of the root partition in MB
+    :param size_reserve: empty partition between root and boot in MB (pma#463)
     """
     pmb.helpers.mount.umount_all(
         args, args.work + "/chroot_native/dev/install")
     if args.sdcard:
         mount_sdcard(args)
     else:
-        create_and_mount_image(args, size_boot, size_root, args.split)
+        create_and_mount_image(args, size_boot, size_root, size_reserve,
+                               args.split)

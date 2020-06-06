@@ -366,17 +366,22 @@ def sanity_check_sdcard(device):
             raise RuntimeError("{} is read-only, is the sdcard locked?".format(device))
 
 
-def install_system_image(args):
+def install_system_image(args, size_reserve=0):
+    """
+    :param size_reserve: empty partition between root and boot in MB (pma#463)
+    """
     # Partition and fill image/sdcard
     logging.info("*** (3/5) PREPARE INSTALL BLOCKDEVICE ***")
     pmb.chroot.shutdown(args, True)
     (size_boot, size_root) = get_subpartitions_size(args)
     if not args.rsync:
-        pmb.install.blockdevice.create(args, size_boot, size_root)
+        pmb.install.blockdevice.create(args, size_boot, size_root,
+                                       size_reserve)
         if not args.split:
-            pmb.install.partition(args, size_boot)
+            pmb.install.partition(args, size_boot, size_reserve)
     if not args.split:
-        pmb.install.partitions_mount(args)
+        root_id = 3 if size_reserve else 2
+        pmb.install.partitions_mount(args, root_id)
 
     if args.full_disk_encryption:
         logging.info("WARNING: Full disk encryption is enabled!")
@@ -386,7 +391,7 @@ def install_system_image(args):
         logging.info("FDE by re-running the install command without '--fde' until")
         logging.info("you have properly configured osk-sdl. More information:")
         logging.info("<https://postmarketos.org/osk-port>")
-    pmb.install.format(args)
+    pmb.install.format(args, size_reserve)
 
     # Just copy all the files
     logging.info("*** (4/5) FILL INSTALL BLOCKDEVICE ***")

@@ -8,9 +8,10 @@ import pmb.config
 import pmb.install.losetup
 
 
-def partitions_mount(args):
+def partitions_mount(args, root_id):
     """
     Mount blockdevices of partitions inside native chroot
+    :param root_id: root partition id (3 with --reserve-space, otherwise 2)
     """
     prefix = args.sdcard
     if not args.sdcard:
@@ -35,22 +36,28 @@ def partitions_mount(args):
                            prefix + " to be located at " + prefix +
                            "1 or " + prefix + "p1!")
 
-    for i in [1, 2]:
+    for i in [1, root_id]:
         source = prefix + partition_prefix + str(i)
         target = args.work + "/chroot_native/dev/installp" + str(i)
         pmb.helpers.mount.bind_file(args, source, target)
 
 
-def partition(args, size_boot):
+def partition(args, size_boot, size_reserve):
     """
-    Partition /dev/install and create /dev/install{p1,p2}
+    Partition /dev/install and create /dev/install{p1,p2,p3}:
+    * /dev/installp1: boot
+    * /dev/installp2: root (or reserved space)
+    * /dev/installp3: (root, if reserved space > 0)
 
     :param size_boot: size of the boot partition in MB
+    :param size_reserve: empty partition between root and boot in MB (pma#463)
     """
     # Convert to MB and print info
-    mb_boot = str(round(size_boot)) + "M"
-    logging.info("(native) partition /dev/install (boot: " + mb_boot +
-                 ", root: the rest)")
+    mb_boot = f"{round(size_boot)}M"
+    mb_reserved = f"{round(size_reserve)}M"
+    mb_root_start = f"{round(size_boot) + round(size_reserve)}M"
+    logging.info(f"(native) partition /dev/install (boot: {mb_boot},"
+                 f" reserved: {mb_reserved}, root: the rest)")
 
     filesystem = args.deviceinfo["boot_filesystem"] or "ext2"
 
@@ -63,9 +70,16 @@ def partition(args, size_boot):
     commands = [
         ["mktable", "msdos"],
         ["mkpart", "primary", filesystem, boot_part_start + 's', mb_boot],
-        ["mkpart", "primary", mb_boot, "100%"],
+    ]
+
+    if size_reserve:
+        commands += [["mkpart", "primary", mb_boot, mb_reserved]]
+
+    commands += [
+        ["mkpart", "primary", mb_root_start, "100%"],
         ["set", "1", "boot", "on"]
     ]
+
     for command in commands:
         pmb.chroot.root(args, ["parted", "-s", "/dev/install"] +
                         command, check=False)
