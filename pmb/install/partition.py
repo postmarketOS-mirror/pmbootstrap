@@ -45,7 +45,7 @@ def partition(args, size_boot):
     """
     Partition /dev/install and create /dev/install{p1,p2}
 
-    size_boot: size of the boot partition in MB
+    :param size_boot: size of the boot partition in MB
     """
     # Convert to MB and print info
     mb_boot = str(round(size_boot)) + "M"
