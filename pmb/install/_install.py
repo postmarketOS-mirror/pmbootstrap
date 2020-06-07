@@ -383,14 +383,6 @@ def install_system_image(args, size_reserve=0):
         root_id = 3 if size_reserve else 2
         pmb.install.partitions_mount(args, root_id)
 
-    if args.full_disk_encryption:
-        logging.info("WARNING: Full disk encryption is enabled!")
-        logging.info("Make sure that osk-sdl has been properly configured for your device")
-        logging.info("or else you will be unable to unlock the rootfs on boot!")
-        logging.info("If you started a device port, it is recommended you disable")
-        logging.info("FDE by re-running the install command without '--fde' until")
-        logging.info("you have properly configured osk-sdl. More information:")
-        logging.info("<https://postmarketos.org/osk-port>")
     pmb.install.format(args, size_reserve)
 
     # Just copy all the files
