@@ -417,8 +417,13 @@ def install_system_image(args, size_reserve=0):
         pmb.chroot.user(args, ["mv", "-f", sys_image_sparse, sys_image],
                         working_dir="/home/pmos/rootfs/")
 
-    # Kernel flash information
-    logging.info("*** (5/5) FLASHING TO DEVICE ***")
+
+def print_flash_info(args, step=5):
+    """ Print flashing information, based on the deviceinfo data and the
+        pmbootstrap arguments.
+
+        :param step: installation step number """
+    logging.info(f"*** ({step}/{step}) FLASHING TO DEVICE ***")
     logging.info("Run the following to flash your installation to the"
                  " target device:")
 
@@ -552,7 +557,10 @@ def install(args):
     # Set the hostname as the device name
     setup_hostname(args)
 
-    if args.android_recovery_zip:
-        install_recovery_zip(args)
-    elif not args.no_image:
-        install_system_image(args)
+    if args.no_image:
+        return
+    elif args.android_recovery_zip:
+        return install_recovery_zip(args)
+
+    install_system_image(args)
+    print_flash_info(args)
