@@ -115,13 +115,14 @@ def create_and_mount_image(args, size_boot, size_root, size_reserve,
                                     args.work + "/chroot_native" + mount_point)
 
 
-def create(args, size_boot, size_root, size_reserve):
+def create(args, size_boot, size_root, size_reserve, split):
     """
     Create /dev/install (the "install blockdevice").
 
     :param size_boot: size of the boot partition in MB
     :param size_root: size of the root partition in MB
     :param size_reserve: empty partition between root and boot in MB (pma#463)
+    :param split: create separate images for boot and root partitions
     """
     pmb.helpers.mount.umount_all(
         args, args.work + "/chroot_native/dev/install")
@@ -129,4 +130,4 @@ def create(args, size_boot, size_root, size_reserve):
         mount_sdcard(args)
     else:
         create_and_mount_image(args, size_boot, size_root, size_reserve,
-                               args.split)
+                               split)

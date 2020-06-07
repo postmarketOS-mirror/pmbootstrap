@@ -374,7 +374,7 @@ def sanity_check_sdcard(device):
 
 
 def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
-                         step=3, steps=5):
+                         step=3, steps=5, split=False):
     """
     :param size_reserve: empty partition between root and boot in MB (pma#463)
     :param suffix: the chroot suffix, where the rootfs that will be installed
@@ -382,6 +382,7 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     :param root_label: label of the root partition (e.g. "pmOS_root")
     :param step: next installation step
     :param steps: total installation steps
+    :param split: create separate images for boot and root partitions
     """
     # Partition and fill image/sdcard
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
@@ -389,10 +390,10 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     (size_boot, size_root) = get_subpartitions_size(args, suffix)
     if not args.rsync:
         pmb.install.blockdevice.create(args, size_boot, size_root,
-                                       size_reserve)
-        if not args.split:
+                                       size_reserve, split)
+        if not split:
             pmb.install.partition(args, size_boot, size_reserve)
-    if not args.split:
+    if not split:
         root_id = 3 if size_reserve else 2
         pmb.install.partitions_mount(args, root_id)
 
@@ -412,7 +413,7 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     if sparse is None:
         sparse = args.deviceinfo["flash_sparse"] == "true"
 
-    if sparse and not args.split and not args.sdcard:
+    if sparse and not split and not args.sdcard:
         logging.info("(native) make sparse rootfs")
         pmb.chroot.apk.install(args, ["android-tools"])
         sys_image = args.device + ".img"
@@ -570,5 +571,5 @@ def install(args):
     elif args.android_recovery_zip:
         return install_recovery_zip(args)
 
-    install_system_image(args, 0, f"rootfs_{args.device}")
+    install_system_image(args, 0, f"rootfs_{args.device}", split=args.split)
     print_flash_info(args)
