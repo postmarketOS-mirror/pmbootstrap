@@ -438,16 +438,18 @@ def print_flash_info(args, step=5):
         logging.info("* pmbootstrap flasher flash_rootfs")
         logging.info("  Flashes the generated rootfs image to your device:")
         if args.split:
-            logging.info("  " + args.work + "/chroot_native/home/pmos/rootfs/" +
-                         args.device + "-rootfs.img")
+            logging.info(f"  {args.work}/chroot_native/home/pmos/rootfs/"
+                         f"{args.device}-rootfs.img")
         else:
-            logging.info("  " + args.work + "/chroot_native/home/pmos/rootfs/" +
-                         args.device + ".img")
-            logging.info("  (NOTE: This file has a partition table, which contains"
-                         " /boot and / subpartitions. That way we don't need to"
-                         " change the partition layout on your device.)")
+            logging.info(f"  {args.work}/chroot_native/home/pmos/rootfs/"
+                         f"{args.device}.img")
+            logging.info("  (NOTE: This file has a partition table, which"
+                         " contains /boot and / subpartitions. That way we"
+                         " don't need to change the partition layout on your"
+                         " device.)")
 
-    # if current flasher supports vbmeta and partition is explicitly spcified in deviceinfo
+    # if current flasher supports vbmeta and partition is explicitly specified
+    # in deviceinfo
     if "flash_vbmeta" in flasher_actions and \
             (args.deviceinfo["flash_fastboot_partition_vbmeta"] or
              args.deviceinfo["flash_heimdall_partition_vbmeta"]):
@@ -458,14 +460,15 @@ def print_flash_info(args, step=5):
     # (e.g. an Android boot image is generated). In that case, "flash_kernel"
     # works even when partitions are split or installing for sdcard.
     # This is not possible if the flash method requires split partitions.
-    if "flash_kernel" in flasher_actions and (not requires_split or args.split):
+    if "flash_kernel" in flasher_actions and \
+            (not requires_split or args.split):
         logging.info("* pmbootstrap flasher flash_kernel")
         logging.info("  Flashes the kernel + initramfs to your device:")
         if requires_split:
-            logging.info("  " + args.work + "/chroot_native/home/pmos/rootfs/" +
-                         args.device + "-boot.img")
+            logging.info(f"  {args.work}/chroot_native/home/pmos/rootfs/"
+                         f"{args.device}-boot.img")
         else:
-            logging.info("  " + args.work + "/chroot_rootfs_" + args.device + "/boot")
+            logging.info(f"  {args.work}/chroot_rootfs_{args.device}/boot")
 
     if "boot" in flasher_actions:
         logging.info("  (NOTE: " + method + " also supports booting"
