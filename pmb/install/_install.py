@@ -19,20 +19,26 @@ import pmb.install.recovery
 import pmb.install
 
 
-def mount_device_rootfs(args, suffix="native"):
+def mount_device_rootfs(args, suffix_rootfs, suffix_mount="native"):
     """
     Mount the device rootfs.
+    :param suffix_rootfs: the chroot suffix, where the rootfs that will be
+                          installed on the device has been created (e.g.
+                          "rootfs_qemu-amd64")
+    :param suffix_mount: the chroot suffix, where the device rootfs will be
+                         mounted (e.g. "native")
     """
-    mountpoint = "/mnt/rootfs_" + args.device
-    pmb.helpers.mount.bind(args, args.work + "/chroot_rootfs_" + args.device,
-                           args.work + "/chroot_" + suffix + mountpoint)
+    mountpoint = f"/mnt/{suffix_rootfs}"
+    pmb.helpers.mount.bind(args, f"{args.work}/chroot_{suffix_rootfs}",
+                           f"{args.work}/chroot_{suffix_mount}{mountpoint}")
     return mountpoint
 
 
-def get_subpartitions_size(args):
+def get_subpartitions_size(args, suffix):
     """
     Calculate the size of the boot and root subpartition.
 
+    :param suffix: the chroot suffix, e.g. "rootfs_qemu-amd64"
     :returns: (boot, root) the size of the boot and root
               partition as integer in MB
     """
@@ -41,7 +47,7 @@ def get_subpartitions_size(args):
     # Estimate root partition size, then add some free space. The size
     # calculation is not as trivial as one may think, and depending on the
     # file system etc it seems to be just impossible to get it right.
-    chroot = args.work + "/chroot_rootfs_" + args.device
+    chroot = f"{args.work}/chroot_{suffix}"
     root = pmb.helpers.other.folder_size(args, chroot) / 1024 / 1024
     root *= 1.20
     root += 50
@@ -94,16 +100,17 @@ def get_kernel_package(args, device):
     return ["device-" + device + "-kernel-" + args.kernel]
 
 
-def copy_files_from_chroot(args):
+def copy_files_from_chroot(args, suffix):
     """
     Copy all files from the rootfs chroot to /mnt/install, except
     for the home folder (because /home will contain some empty
     mountpoint folders).
+
+    :param suffix: the chroot suffix, e.g. "rootfs_qemu-amd64"
     """
     # Mount the device rootfs
-    logging.info("(native) copy rootfs_" + args.device + " to" +
-                 " /mnt/install/")
-    mountpoint = mount_device_rootfs(args)
+    logging.info(f"(native) copy {suffix} to /mnt/install/")
+    mountpoint = mount_device_rootfs(args, suffix)
     mountpoint_outside = args.work + "/chroot_native" + mountpoint
 
     # Remove empty qemu-user binary stub (where the binary was bind-mounted)
@@ -303,7 +310,7 @@ def embed_firmware(args):
                                "deviceinfo_sd_embed_firmware_step_size "
                                "is not valid: {}".format(step))
 
-    device_rootfs = mount_device_rootfs(args)
+    device_rootfs = mount_device_rootfs(args, f"rootfs_{args.device}")
     binaries = args.deviceinfo["sd_embed_firmware"].split(",")
 
     # Perform three checks prior to writing binaries to disk: 1) that binaries
@@ -366,14 +373,16 @@ def sanity_check_sdcard(device):
             raise RuntimeError("{} is read-only, is the sdcard locked?".format(device))
 
 
-def install_system_image(args, size_reserve=0):
+def install_system_image(args, size_reserve, suffix):
     """
     :param size_reserve: empty partition between root and boot in MB (pma#463)
+    :param suffix: the chroot suffix, where the rootfs that will be installed
+                   on the device has been created (e.g. "rootfs_qemu-amd64")
     """
     # Partition and fill image/sdcard
     logging.info("*** (3/5) PREPARE INSTALL BLOCKDEVICE ***")
     pmb.chroot.shutdown(args, True)
-    (size_boot, size_root) = get_subpartitions_size(args)
+    (size_boot, size_root) = get_subpartitions_size(args, suffix)
     if not args.rsync:
         pmb.install.blockdevice.create(args, size_boot, size_root,
                                        size_reserve)
@@ -387,7 +396,7 @@ def install_system_image(args, size_reserve=0):
 
     # Just copy all the files
     logging.info("*** (4/5) FILL INSTALL BLOCKDEVICE ***")
-    copy_files_from_chroot(args)
+    copy_files_from_chroot(args, suffix)
     create_home_from_skel(args)
     configure_apk(args)
     copy_ssh_keys(args)
@@ -476,7 +485,7 @@ def print_flash_info(args, step=5):
 def install_recovery_zip(args):
     logging.info("*** (3/4) CREATING RECOVERY-FLASHABLE ZIP ***")
     suffix = "buildroot_" + args.deviceinfo["arch"]
-    mount_device_rootfs(args, suffix)
+    mount_device_rootfs(args, f"rootfs_{args.device}", suffix)
     pmb.install.recovery.create_zip(args, suffix)
 
     # Flash information
@@ -557,5 +566,5 @@ def install(args):
     elif args.android_recovery_zip:
         return install_recovery_zip(args)
 
-    install_system_image(args)
+    install_system_image(args, 0, f"rootfs_{args.device}")
     print_flash_info(args)
