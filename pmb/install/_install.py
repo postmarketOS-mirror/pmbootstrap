@@ -373,11 +373,12 @@ def sanity_check_sdcard(device):
             raise RuntimeError("{} is read-only, is the sdcard locked?".format(device))
 
 
-def install_system_image(args, size_reserve, suffix):
+def install_system_image(args, size_reserve, suffix, root_label="pmOS_root"):
     """
     :param size_reserve: empty partition between root and boot in MB (pma#463)
     :param suffix: the chroot suffix, where the rootfs that will be installed
                    on the device has been created (e.g. "rootfs_qemu-amd64")
+    :param root_label: label of the root partition (e.g. "pmOS_root")
     """
     # Partition and fill image/sdcard
     logging.info("*** (3/5) PREPARE INSTALL BLOCKDEVICE ***")
@@ -392,7 +393,7 @@ def install_system_image(args, size_reserve, suffix):
         root_id = 3 if size_reserve else 2
         pmb.install.partitions_mount(args, root_id)
 
-    pmb.install.format(args, size_reserve)
+    pmb.install.format(args, size_reserve, root_label)
 
     # Just copy all the files
     logging.info("*** (4/5) FILL INSTALL BLOCKDEVICE ***")
