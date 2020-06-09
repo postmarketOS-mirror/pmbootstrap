@@ -9,14 +9,15 @@ import pmb.helpers.cli
 import pmb.config
 
 
-def previous_install(args):
+def previous_install(args, path):
     """
     Search the sdcard for possible existence of a previous installation of pmOS.
     We temporarily mount the possible pmOS_boot partition as /dev/sdcardp1 inside
     the native chroot to check the label from there.
+    :param path: path to sdcard device (e.g. /dev/mmcblk0)
     """
     label = ""
-    for blockdevice_outside in [args.sdcard + "1", args.sdcard + "p1"]:
+    for blockdevice_outside in [f"{path}1", f"{path}p1"]:
         if not os.path.exists(blockdevice_outside):
             continue
         blockdevice_inside = "/dev/sdcardp1"
@@ -28,29 +29,31 @@ def previous_install(args):
     return "pmOS_boot" in label
 
 
-def mount_sdcard(args):
+def mount_sdcard(args, path):
+    """
+    :param path: path to sdcard device (e.g. /dev/mmcblk0)
+    """
     # Sanity checks
     if args.deviceinfo["external_storage"] != "true":
         raise RuntimeError("According to the deviceinfo, this device does"
                            " not support a sdcard installation.")
-    if not os.path.exists(args.sdcard):
-        raise RuntimeError("The sdcard device does not exist: " +
-                           args.sdcard)
-    for path in glob.glob(args.sdcard + "*"):
-        if pmb.helpers.mount.ismount(path):
-            raise RuntimeError(path + " is mounted! We will not attempt"
-                               " to format this!")
-    logging.info("(native) mount /dev/install (host: " + args.sdcard + ")")
-    pmb.helpers.mount.bind_file(args, args.sdcard,
+    if not os.path.exists(path):
+        raise RuntimeError(f"The sdcard device does not exist: {path}")
+    for path_mount in glob.glob(f"{path}*"):
+        if pmb.helpers.mount.ismount(path_mount):
+            raise RuntimeError(f"{path_mount} is mounted! Will not attempt to"
+                               " format this!")
+    logging.info(f"(native) mount /dev/install (host: {path})")
+    pmb.helpers.mount.bind_file(args, path,
                                 args.work + "/chroot_native/dev/install")
-    if previous_install(args):
+    if previous_install(args, path):
         if not pmb.helpers.cli.confirm(args, "WARNING: This device has a"
                                        " previous installation of pmOS."
                                        " CONTINUE?"):
             raise RuntimeError("Aborted.")
     else:
-        if not pmb.helpers.cli.confirm(args, "EVERYTHING ON " + args.sdcard +
-                                       " WILL BE ERASED! CONTINUE?"):
+        if not pmb.helpers.cli.confirm(args, f"EVERYTHING ON {path} WILL BE"
+                                       " ERASED! CONTINUE?"):
             raise RuntimeError("Aborted.")
 
 
@@ -115,7 +118,7 @@ def create_and_mount_image(args, size_boot, size_root, size_reserve,
                                     args.work + "/chroot_native" + mount_point)
 
 
-def create(args, size_boot, size_root, size_reserve, split):
+def create(args, size_boot, size_root, size_reserve, split, sdcard):
     """
     Create /dev/install (the "install blockdevice").
 
@@ -123,11 +126,12 @@ def create(args, size_boot, size_root, size_reserve, split):
     :param size_root: size of the root partition in MB
     :param size_reserve: empty partition between root and boot in MB (pma#463)
     :param split: create separate images for boot and root partitions
+    :param sdcard: path to sdcard device (e.g. /dev/mmcblk0) or None
     """
     pmb.helpers.mount.umount_all(
         args, args.work + "/chroot_native/dev/install")
-    if args.sdcard:
-        mount_sdcard(args)
+    if sdcard:
+        mount_sdcard(args, sdcard)
     else:
         create_and_mount_image(args, size_boot, size_root, size_reserve,
                                split)

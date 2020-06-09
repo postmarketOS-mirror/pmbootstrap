@@ -374,7 +374,7 @@ def sanity_check_sdcard(device):
 
 
 def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
-                         step=3, steps=5, split=False):
+                         step=3, steps=5, split=False, sdcard=None):
     """
     :param size_reserve: empty partition between root and boot in MB (pma#463)
     :param suffix: the chroot suffix, where the rootfs that will be installed
@@ -383,6 +383,7 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     :param step: next installation step
     :param steps: total installation steps
     :param split: create separate images for boot and root partitions
+    :param sdcard: path to sdcard device (e.g. /dev/mmcblk0) or None
     """
     # Partition and fill image/sdcard
     logging.info(f"*** ({step}/{steps}) PREPARE INSTALL BLOCKDEVICE ***")
@@ -390,14 +391,14 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     (size_boot, size_root) = get_subpartitions_size(args, suffix)
     if not args.rsync:
         pmb.install.blockdevice.create(args, size_boot, size_root,
-                                       size_reserve, split)
+                                       size_reserve, split, sdcard)
         if not split:
             pmb.install.partition(args, size_boot, size_reserve)
     if not split:
         root_id = 3 if size_reserve else 2
-        pmb.install.partitions_mount(args, root_id)
+        pmb.install.partitions_mount(args, root_id, sdcard)
 
-    pmb.install.format(args, size_reserve, root_label)
+    pmb.install.format(args, size_reserve, root_label, sdcard)
 
     # Just copy all the files
     logging.info(f"*** ({step + 1}/{steps}) FILL INSTALL BLOCKDEVICE ***")
@@ -413,7 +414,7 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     if sparse is None:
         sparse = args.deviceinfo["flash_sparse"] == "true"
 
-    if sparse and not split and not args.sdcard:
+    if sparse and not split and not sdcard:
         logging.info("(native) make sparse rootfs")
         pmb.chroot.apk.install(args, ["android-tools"])
         sys_image = args.device + ".img"
@@ -571,5 +572,6 @@ def install(args):
     elif args.android_recovery_zip:
         return install_recovery_zip(args)
 
-    install_system_image(args, 0, f"rootfs_{args.device}", split=args.split)
+    install_system_image(args, 0, f"rootfs_{args.device}", split=args.split,
+                         sdcard=args.sdcard)
     print_flash_info(args)

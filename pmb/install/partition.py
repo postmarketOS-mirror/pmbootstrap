@@ -8,13 +8,14 @@ import pmb.config
 import pmb.install.losetup
 
 
-def partitions_mount(args, root_id):
+def partitions_mount(args, root_id, sdcard):
     """
     Mount blockdevices of partitions inside native chroot
     :param root_id: root partition id (3 with --reserve-space, otherwise 2)
+    :param sdcard: path to sdcard device (e.g. /dev/mmcblk0) or None
     """
-    prefix = args.sdcard
-    if not args.sdcard:
+    prefix = sdcard
+    if not sdcard:
         img_path = "/home/pmos/rootfs/" + args.device + ".img"
         prefix = pmb.install.losetup.device_by_back_file(args, img_path)
 
