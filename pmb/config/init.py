@@ -389,6 +389,15 @@ def ask_for_ssh_keys(args):
                                    default=args.ssh_keys)
 
 
+def ask_install_build_pkgs(args):
+    logging.info("After pmaports are changed, the binary packages may be"
+                 " outdated. If you want to install postmarketOS without"
+                 " changes, reply 'n' for a faster installation.")
+    return pmb.helpers.cli.confirm(args, "Build outdated packages during"
+                                   " 'pmbootstrap install'?",
+                                   default=args.install_build_pkgs)
+
+
 def frontend(args):
     require_programs()
 
@@ -453,6 +462,9 @@ def frontend(args):
 
     # pmaports path (if users change it with: 'pmbootstrap --aports=... init')
     cfg["pmbootstrap"]["aports"] = args.aports
+
+    # Build outdated packages in pmbootstrap install
+    cfg["pmbootstrap"]["install_build_pkgs"] = str(ask_install_build_pkgs(args))
 
     # Save config
     pmb.config.save(args, cfg)

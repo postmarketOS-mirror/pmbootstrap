@@ -42,6 +42,7 @@ config_keys = ["aports",
                "device",
                "extra_packages",
                "hostname",
+               "install_build_pkgs",
                "is_default_channel",
                "jobs",
                "kernel",
@@ -71,6 +72,7 @@ defaults = {
     "extra_packages": "none",
     "fork_alpine": False,
     "hostname": "",
+    "install_build_pkgs": True,
     # A higher value is typically desired, but this can lead to VERY long open
     # times on slower devices due to host systems being MUCH faster than the
     # target device (see issue #429).

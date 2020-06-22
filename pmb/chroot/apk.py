@@ -98,8 +98,13 @@ def install_is_necessary(args, build, arch, package, packages_installed):
     :param packages_installed: Return value from installed().
     :returns: True if the package needs to be installed/updated, False otherwise.
     """
+    # User may have disabled buiding packages during "pmbootstrap install"
+    build_disabled = False
+    if args.action == "install" and not args.install_build_pkgs:
+        build_disabled = True
+
     # Build package
-    if build:
+    if build and not build_disabled:
         pmb.build.package(args, package, arch)
 
     # No further checks when not installed
@@ -109,6 +114,12 @@ def install_is_necessary(args, build, arch, package, packages_installed):
     # Make sure, that we really have a binary package
     data_repo = pmb.parse.apkindex.package(args, package, arch, False)
     if not data_repo:
+        if build_disabled:
+            raise RuntimeError(f"{package}: no binary package found for"
+                               f" {arch}, and compiling packages during"
+                               " 'pmbootstrap install' has been disabled."
+                               " Consider changing this option in"
+                               " 'pmbootstrap init'.")
         logging.warning("WARNING: Internal error in pmbootstrap," +
                         " package '" + package + "' for " + arch +
                         " has not been built yet, but it should have"
