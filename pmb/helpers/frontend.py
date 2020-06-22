@@ -1,5 +1,6 @@
 # Copyright 2020 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
+import glob
 import json
 import logging
 import os
@@ -227,6 +228,18 @@ def install(args):
         flasher = pmb.config.flashers.get(args.deviceinfo["flash_method"], {})
         if flasher.get("split", False):
             args.split = True
+
+    # Don't install locally compiled packages and package signing keys
+    if not args.install_local_pkgs:
+        # Implies that we don't build outdated packages (overriding the answer
+        # in 'pmbootstrap init')
+        args.install_build_pkgs = False
+
+        # Safest way to avoid installing local packages is having none
+        if glob.glob(f"{args.work}/packages/*"):
+            raise ValueError("--no-local-pkgs specified, but locally built"
+                             " packages found. Consider 'pmbootstrap zap -p'"
+                             " to delete them.")
 
     pmb.install.install(args)
 

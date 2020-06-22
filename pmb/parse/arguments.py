@@ -562,6 +562,9 @@ def arguments():
                          help="wrap the resulting image in a graphical"
                               " on-device installer, so the installation can"
                               " be customized after flashing")
+    install.add_argument("--no-local-pkgs", dest="install_local_pkgs",
+                         help="do not install locally compiled packages and"
+                              " package signing keys", action="store_false")
     group = install.add_mutually_exclusive_group()
     group.add_argument("--sparse", help="generate sparse image file"
                        " (even if unsupported by device)", default=None,
