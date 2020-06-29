@@ -538,7 +538,7 @@ def install_on_device_installer(args, step, steps):
     # properties (e.g. to display the version number), or transform the image
     # file into another format. This can all be done without pmbootstrap
     # changes in the postmarketos-ondev package.
-    logging.info(f"({suffix_installer}) ondev-prepare-image")
+    logging.info(f"({suffix_installer}) ondev-prepare")
     channel = pmb.config.pmaports.read_config(args)["channel"]
     channel_cfg = pmb.config.pmaports.read_config_channel(args)
     env = {"ONDEV_CHANNEL": channel,
