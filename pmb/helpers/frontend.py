@@ -223,6 +223,19 @@ def install(args):
             raise ValueError("--on-device-installer cannot be combined with"
                              " --rsync")
 
+    # On-device installer overrides
+    if args.on_device_installer:
+        # To make code for the on-device installer not needlessly complex, just
+        # hardcode "user" as username here. (The on-device installer will set
+        # a password for the user, disable SSH password authentication,
+        # optionally add a new user for SSH that must not have the same
+        # username etc.)
+        if args.user != "user":
+            logging.warning(f"WARNING: custom username '{args.user}' will be"
+                            " replaced with 'user' for the on-device"
+                            " installer.")
+            args.user = "user"
+
     if not args.sdcard and args.split is None:
         # Default to split if the flash method requires it
         flasher = pmb.config.flashers.get(args.deviceinfo["flash_method"], {})
