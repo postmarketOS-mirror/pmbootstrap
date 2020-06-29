@@ -31,6 +31,9 @@ pmaports_min_version = "7"
 # see migrate_work_folder()).
 work_version = 5
 
+# Minimum required version of postmarketos-ondev (pmbootstrap install --ondev)
+ondev_min_version = "0.2.0"
+
 # Programs that pmbootstrap expects to be available from the host system. Keep
 # in sync with README.md, and try to keep the list as small as possible. The
 # idea is to run almost everything in Alpine chroots.

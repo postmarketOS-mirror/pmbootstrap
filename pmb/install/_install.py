@@ -382,6 +382,18 @@ def sanity_check_sdcard(device):
             raise RuntimeError("{} is read-only, is the sdcard locked?".format(device))
 
 
+def sanity_check_ondev_version(args):
+    arch = args.deviceinfo["arch"]
+    package = pmb.helpers.package.get(args, "postmarketos-ondev", arch)
+    ver_pkg = package["version"].split("-r")[0]
+    ver_min = pmb.config.ondev_min_version
+    if pmb.parse.version.compare(ver_pkg, ver_min) == -1:
+        raise RuntimeError("This version of pmbootstrap requires"
+                           f" postmarketos-ondev version {ver_min} or"
+                           " higher. The postmarketos-ondev found in pmaports"
+                           f" / in the binary packages has version {ver_pkg}.")
+
+
 def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
                          step=3, steps=5, split=False, sdcard=None):
     """
@@ -566,6 +578,8 @@ def install(args):
     # Sanity checks
     if not args.android_recovery_zip and args.sdcard:
         sanity_check_sdcard(args.sdcard)
+    if args.on_device_installer:
+        sanity_check_ondev_version(args)
 
     # Number of steps for the different installation methods.
     if args.no_image:
