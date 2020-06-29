@@ -541,11 +541,12 @@ def install_on_device_installer(args, step, steps):
     logging.info(f"({suffix_installer}) ondev-prepare-image")
     channel = pmb.config.pmaports.read_config(args)["channel"]
     channel_cfg = pmb.config.pmaports.read_config_channel(args)
-    pmb.chroot.root(args, ["ondev-prepare", channel,
-                           channel_cfg["description"],
-                           channel_cfg["branch_pmaports"],
-                           channel_cfg["branch_aports"],
-                           channel_cfg["mirrordir_alpine"]], suffix_installer)
+    env = {"ONDEV_CHANNEL": channel,
+           "ONDEV_CHANNEL_BRANCH_APORTS": channel_cfg["branch_aports"],
+           "ONDEV_CHANNEL_BRANCH_PMAPORTS": channel_cfg["branch_pmaports"],
+           "ONDEV_CHANNEL_DESCRIPTION": channel_cfg["description"],
+           "ONDEV_CHANNEL_MIRRORDIR_ALPINE": channel_cfg["mirrordir_alpine"]}
+    pmb.chroot.root(args, ["ondev-prepare"], suffix_installer, env=env)
 
     # Remove $DEVICE-boot.img (we will generate a new one if --split was
     # specified, otherwise the separate boot image is not needed)
