@@ -189,14 +189,17 @@ necessary_kconfig_options = {
     ">=0.0.0": {  # all versions
         "all": {  # all arches
             "ANDROID_PARANOID_NETWORK": False,
+            "AUDIT": True,
             "BLK_DEV_INITRD": True,
             "CGROUPS": True,
             "CRYPTO_XTS": True,
+            "DEFAULT_SECURITY_APPARMOR": True,
             "DEVTMPFS": True,
             "DM_CRYPT": True,
             "EXT4_FS": True,
             "KINETO_GAN": False,
             "PFT": False,
+            "SECURITY_APPARMOR": True,
             "SYSVIPC": True,
             "USE_VFB": False,
             "VT": True,
@@ -211,6 +214,11 @@ necessary_kconfig_options = {
     "<5.2.0": {
         "armhf armv7 x86": {
             "LBDAF": True
+        }
+    },
+    "<5.1": {
+        "all": {
+            "SECURITY_APPARMOR_BOOTPARAM_VALUE": True,
         }
     }
 }
