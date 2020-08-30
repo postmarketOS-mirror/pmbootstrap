@@ -154,6 +154,9 @@ def get_branches_official(args, name_repo):
     # This functions gets called with pmaports and aports_upstream, because
     # both are displayed in "pmbootstrap status". But it only makes sense
     # to display pmaports there, related code will be refactored soon (#1903).
+    if name_repo == "aports_upstream":
+        # Also accept 3.*-stable branches for Alpine Linux aports
+        return ["master"] + [f"3.{i}-stable" for i in range(12, 20)]
     if name_repo != "pmaports":
         return ["master"]
 
