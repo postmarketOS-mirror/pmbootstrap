@@ -37,7 +37,7 @@ ondev_min_version = "0.2.0"
 # Programs that pmbootstrap expects to be available from the host system. Keep
 # in sync with README.md, and try to keep the list as small as possible. The
 # idea is to run almost everything in Alpine chroots.
-required_programs = ["git", "openssl", "ps"]
+required_programs = ["git", "openssl", "ps", "sudo"]
 
 # Keys saved in the config file (mostly what we ask in 'pmbootstrap init')
 config_keys = ["aports",
