@@ -223,6 +223,10 @@ def install(args):
         if args.rsync:
             raise ValueError("--on-device-installer cannot be combined with"
                              " --rsync")
+    else:
+        if not args.ondev_rootfs:
+            raise ValueError("--no-rootfs can only be combined with --ondev."
+                             " Do you mean --no-image?")
 
     # On-device installer overrides
     if args.on_device_installer:

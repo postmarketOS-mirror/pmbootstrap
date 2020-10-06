@@ -116,6 +116,9 @@ def arguments_install(subparser):
     group.add_argument("--no-local-pkgs", dest="install_local_pkgs",
                        help="do not install locally compiled packages and"
                             " package signing keys", action="store_false")
+    group.add_argument("--no-rootfs", dest="ondev_rootfs",
+                       help="do not generate the postmarketOS rootfs to be"
+                            " installed", action="store_false")
 
 
 def arguments_export(subparser):

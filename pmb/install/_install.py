@@ -594,10 +594,11 @@ def install_recovery_zip(args):
 
 def install_on_device_installer(args, step, steps):
     # Generate the rootfs image
-    suffix_rootfs = f"rootfs_{args.device}"
-    install_system_image(args, 0, suffix_rootfs, step=step, steps=steps,
-                         split=True)
-    step += 2
+    if args.ondev_rootfs:
+        suffix_rootfs = f"rootfs_{args.device}"
+        install_system_image(args, 0, suffix_rootfs, step=step, steps=steps,
+                             split=True)
+        step += 2
 
     # Prepare the installer chroot
     logging.info(f"*** ({step}/{steps}) CREATE ON-DEVICE INSTALLER ROOTFS ***")
@@ -610,12 +611,14 @@ def install_on_device_installer(args, step, steps):
     pmb.chroot.apk.install(args, packages, suffix_installer)
 
     # Move rootfs image into installer chroot
-    img = f"{args.device}-root.img"
-    img_path_src = f"{args.work}/chroot_native/home/pmos/rootfs/{img}"
-    img_path_dest = f"{args.work}/chroot_{suffix_installer}/var/lib/rootfs.img"
-    logging.info(f"({suffix_installer}) add {img} as /var/lib/rootfs.img")
-    pmb.install.losetup.umount(args, img_path_src)
-    pmb.helpers.run.root(args, ["mv", img_path_src, img_path_dest])
+    if args.ondev_rootfs:
+        img = f"{args.device}-root.img"
+        img_path_src = f"{args.work}/chroot_native/home/pmos/rootfs/{img}"
+        img_path_dest = f"{args.work}/chroot_{suffix_installer}/var/lib/" \
+            "rootfs.img"
+        logging.info(f"({suffix_installer}) add {img} as /var/lib/rootfs.img")
+        pmb.install.losetup.umount(args, img_path_src)
+        pmb.helpers.run.root(args, ["mv", img_path_src, img_path_dest])
 
     # Run ondev-prepare, so it may generate nice configs from the channel
     # properties (e.g. to display the version number), or transform the image
@@ -636,9 +639,10 @@ def install_on_device_installer(args, step, steps):
 
     # Remove $DEVICE-boot.img (we will generate a new one if --split was
     # specified, otherwise the separate boot image is not needed)
-    img_boot = f"{args.device}-boot.img"
-    logging.info(f"(native) rm {img_boot}")
-    pmb.chroot.root(args, ["rm", f"/home/pmos/rootfs/{img_boot}"])
+    if args.ondev_rootfs:
+        img_boot = f"{args.device}-boot.img"
+        logging.info(f"(native) rm {img_boot}")
+        pmb.chroot.root(args, ["rm", f"/home/pmos/rootfs/{img_boot}"])
 
     # Generate installer image
     size_reserve = round(os.path.getsize(img_path_dest) / 1024 / 1024) + 200
@@ -717,7 +721,7 @@ def install(args):
     elif args.android_recovery_zip:
         steps = 4
     elif args.on_device_installer:
-        steps = 8
+        steps = 8 if args.ondev_rootfs else 5
     else:
         steps = 5
 
@@ -728,8 +732,9 @@ def install(args):
                            build=False)
     step += 1
 
-    create_device_rootfs(args, step, steps)
-    step += 1
+    if args.ondev_rootfs:
+        create_device_rootfs(args, step, steps)
+        step += 1
 
     if args.no_image:
         return
