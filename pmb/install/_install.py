@@ -342,13 +342,16 @@ def setup_hostname(args):
     pmb.chroot.root(args, ["sed", "-i", "-e", regex, "/etc/hosts"], suffix)
 
 
-def embed_firmware(args):
+def embed_firmware(args, suffix):
     """
     This method will embed firmware, located at /usr/share, that are specified
     by the "sd_embed_firmware" deviceinfo parameter into the SD card image
     (e.g. u-boot). Binaries that would overwrite the first partition are not
     accepted, and if multiple binaries are specified then they will be checked
     for collisions with each other.
+
+    :param suffix: of the chroot, which holds the firmware files (either the
+                   f"rootfs_{args.device}", or f"installer_{args.device}")
     """
     if not args.deviceinfo["sd_embed_firmware"]:
         return
@@ -362,7 +365,7 @@ def embed_firmware(args):
                                "deviceinfo_sd_embed_firmware_step_size "
                                "is not valid: {}".format(step))
 
-    device_rootfs = mount_device_rootfs(args, f"rootfs_{args.device}")
+    device_rootfs = mount_device_rootfs(args, suffix)
     binaries = args.deviceinfo["sd_embed_firmware"].split(",")
 
     # Perform three checks prior to writing binaries to disk: 1) that binaries
@@ -377,12 +380,12 @@ def embed_firmware(args):
         except ValueError:
             raise RuntimeError("Value for firmware binary offset is "
                                "not valid: {}".format(offset))
-        binary_path = os.path.join(args.work, "chroot_rootfs_" +
-                                   args.device, "usr/share", binary)
+        binary_path = os.path.join(args.work, f"chroot_{suffix}", "usr/share",
+                                   binary)
         if not os.path.exists(binary_path):
             raise RuntimeError("The following firmware binary does not "
-                               "exist in the device rootfs: "
-                               "{}".format("/usr/share/" + binary))
+                               f"exist in the {suffix} chroot: "
+                               f"/usr/share/{binary}")
         # Insure that embedding the firmware will not overrun the
         # first partition
         boot_part_start = args.deviceinfo["boot_part_start"] or "2048"
@@ -495,7 +498,7 @@ def install_system_image(args, size_reserve, suffix, root_label="pmOS_root",
     create_home_from_skel(args)
     configure_apk(args)
     copy_ssh_keys(args)
-    embed_firmware(args)
+    embed_firmware(args, suffix)
     pmb.chroot.shutdown(args, True)
 
     # Convert rootfs to sparse using img2simg
