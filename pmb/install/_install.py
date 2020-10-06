@@ -643,30 +643,11 @@ def install_on_device_installer(args, step, steps):
                          step, steps, args.split, args.sdcard)
 
 
-def install(args):
-    # Sanity checks
-    if not args.android_recovery_zip and args.sdcard:
-        sanity_check_sdcard(args)
-        sanity_check_sdcard_size(args)
-    if args.on_device_installer:
-        sanity_check_ondev_version(args)
-
-    # Number of steps for the different installation methods.
-    if args.no_image:
-        steps = 2
-    elif args.android_recovery_zip:
-        steps = 4
-    elif args.on_device_installer:
-        steps = 8
-    else:
-        steps = 5
-
-    # Install required programs in native chroot
-    logging.info("*** (1/{}) PREPARE NATIVE CHROOT ***".format(steps))
-    pmb.chroot.apk.install(args, pmb.config.install_native_packages,
-                           build=False)
-
-    logging.info(f'*** (2/{steps} CREATE DEVICE ROOTFS("{args.device}") ***')
+def create_device_rootfs(args, step, steps):
+    # List all packages to be installed (including the ones specified by --add)
+    # and upgrade the installed packages/apkindexes
+    logging.info(f'*** ({step}/{steps}) CREATE DEVICE ROOTFS ("{args.device}")'
+                 ' ***')
 
     # Create user before installing packages, so post-install scripts of
     # pmaports can figure out the username (legacy reasons: pmaports#820)
@@ -717,6 +698,32 @@ def install(args):
 
     # Set the hostname as the device name
     setup_hostname(args)
+
+
+def install(args):
+    # Sanity checks
+    if not args.android_recovery_zip and args.sdcard:
+        sanity_check_sdcard(args)
+        sanity_check_sdcard_size(args)
+    if args.on_device_installer:
+        sanity_check_ondev_version(args)
+
+    # Number of steps for the different installation methods.
+    if args.no_image:
+        steps = 2
+    elif args.android_recovery_zip:
+        steps = 4
+    elif args.on_device_installer:
+        steps = 8
+    else:
+        steps = 5
+
+    # Install required programs in native chroot
+    logging.info("*** (1/{}) PREPARE NATIVE CHROOT ***".format(steps))
+    pmb.chroot.apk.install(args, pmb.config.install_native_packages,
+                           build=False)
+
+    create_device_rootfs(args, 2, steps)
 
     if args.no_image:
         return
