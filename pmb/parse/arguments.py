@@ -22,6 +22,102 @@ import pmb.helpers.pmaports
     See pmb/helpers/args.py for more information about the args variable. """
 
 
+def arguments_install(subparser):
+    ret = subparser.add_parser("install", help="set up device specific"
+                               " chroot and install to SD card or image file")
+
+    # Image type
+    group_desc = ret.add_argument_group(
+        "optional image type",
+        "Format of the resulting image. Default is generating a combined image"
+        " of the postmarketOS boot and root partitions (--no-split). (If the"
+        " device's deviceinfo_flash_method requires separate boot and root"
+        " partitions, then --split is the default.) Related:"
+        " https://postmarketos.org/partitions")
+    group = group_desc.add_mutually_exclusive_group()
+    group.add_argument("--no-split", help="create combined boot and root image"
+                       " file", dest="split", action="store_false",
+                       default=None)
+    group.add_argument("--split", help="create separate boot and root image"
+                       " files", action="store_true")
+    group.add_argument("--sdcard", help="do not create an image file, instead"
+                       " write to the given SD card device (e.g."
+                       " '/dev/mmcblk0')", metavar="BLOCKDEV")
+    group.add_argument("--android-recovery-zip",
+                       help="generate TWRP flashable zip (recommended read:"
+                            " https://postmarketos.org/recoveryzip)",
+                       action="store_true", dest="android_recovery_zip")
+    group.add_argument("--no-image", help="do not generate an image",
+                       action="store_true", dest="no_image")
+
+    # Image type "--sdcard" related
+    group = ret.add_argument_group("optional image type 'sdcard' arguments")
+    group.add_argument("--rsync", help="update the SD card using rsync",
+                       action="store_true")
+
+    # Image type "--android-recovery-zip" related
+    group = ret.add_argument_group("optional image type 'android-recovery-zip'"
+                                   " arguments")
+    group.add_argument("--flavor", help="kernel flavor to include in recovery"
+                       " flashable zip", default=None)
+    group.add_argument("--recovery-install-partition", default="system",
+                       help="partition to flash from recovery (e.g."
+                            " 'external_sd')",
+                       dest="recovery_install_partition")
+    group.add_argument("--recovery-no-kernel",
+                       help="do not overwrite the existing kernel",
+                       action="store_false", dest="recovery_flash_kernel")
+
+    # Full disk encryption (disabled by default, --no-fde has no effect)
+    group = ret.add_argument_group("optional full disk encryption arguments")
+    group.add_argument("--fde", help="use full disk encryption",
+                       action="store_true", dest="full_disk_encryption")
+    group.add_argument("--no-fde", help=argparse.SUPPRESS,
+                       action="store_true", dest="no_fde")
+    group.add_argument("--cipher", help="cryptsetup cipher used to encrypt the"
+                       " the rootfs (e.g. 'aes-xts-plain64')")
+    group.add_argument("--iter-time", help="cryptsetup iteration time (in"
+                       " milliseconds) to use when encrypting the system"
+                       " partition")
+
+    # Packages
+    group = ret.add_argument_group(
+        "optional packages arguments",
+        "Select or deselect packages to be included in the installation.")
+    group.add_argument("--add", help="comma separated list of packages to be"
+                       " added to the rootfs (e.g. 'vim,gcc')",
+                       metavar="PACKAGES")
+    group.add_argument("--no-base",
+                       help="do not install postmarketos-base (advanced)",
+                       action="store_false", dest="install_base")
+    group.add_argument("--no-recommends", dest="install_recommends",
+                       help="do not install packages listed in _pmb_recommends"
+                            " of the UI pmaports",
+                       action="store_false")
+
+    # Sparse image
+    group_desc = ret.add_argument_group(
+        "optional sparse image arguments",
+        "Override deviceinfo_flash_sparse for testing purpose.")
+    group = group_desc.add_mutually_exclusive_group()
+    group.add_argument("--sparse", help="generate sparse image file",
+                       default=None, action="store_true")
+    group.add_argument("--no-sparse", help="do not generate sparse image file",
+                       dest="sparse", action="store_false")
+
+    # On-device installer
+    group = ret.add_argument_group(
+        "optional on-device installer arguments",
+        "Wrap the resulting image in a postmarketOS based installation OS, so"
+        " it can be encrypted and customized on first boot."
+        " Related: https://postmarketos.org/on-device-installer")
+    group.add_argument("--on-device-installer", "--ondev", action="store_true",
+                       help="enable on-device installer")
+    group.add_argument("--no-local-pkgs", dest="install_local_pkgs",
+                       help="do not install locally compiled packages and"
+                            " package signing keys", action="store_false")
+
+
 def arguments_export(subparser):
     ret = subparser.add_parser("export", help="create convenience symlinks"
                                " to generated image files (system, kernel,"
@@ -516,67 +612,7 @@ def arguments():
                                  " 'native'")
 
     # Action: install
-    install = sub.add_parser("install", help="set up device specific" +
-                             " chroot and install to sdcard or image file")
-    group = install.add_mutually_exclusive_group()
-    group.add_argument("--sdcard", help="path to the sdcard device,"
-                       " eg. /dev/mmcblk0")
-    group.add_argument("--split", help="install the boot and root partition"
-                       " in separated image files (default: only if flash method"
-                       " requires it)", action="store_true", default=None)
-    group.add_argument("--no-split", help="create combined boot + root image"
-                       " even if flash method requires it",
-                       dest="split", action="store_false")
-    group.add_argument("--android-recovery-zip",
-                       help="generate TWRP flashable zip",
-                       action="store_true", dest="android_recovery_zip")
-    group.add_argument("--no-image", help="do not generate the image",
-                       action="store_true", dest="no_image")
-    install.add_argument("--rsync", help="update the sdcard using rsync,"
-                         " does not work with --fde", action="store_true")
-    install.add_argument("--cipher", help="cryptsetup cipher used to"
-                         " encrypt the rootfs, eg. aes-xts-plain64")
-    install.add_argument("--iter-time", help="cryptsetup iteration time (in"
-                         " milliseconds) to use when encrypting the system"
-                         " partition")
-    install.add_argument("--add", help="comma separated list of packages to be"
-                         " added to the rootfs (e.g. 'vim,gcc')")
-    install.add_argument("--no-fde", help=argparse.SUPPRESS,
-                         action="store_true", dest="no_fde")
-    install.add_argument("--fde", help="use full disk encryption",
-                         action="store_true", dest="full_disk_encryption")
-    install.add_argument("--flavor",
-                         help="Specify kernel flavor to include in recovery"
-                              " flashable zip", default=None)
-    install.add_argument("--recovery-install-partition", default="system",
-                         help="partition to flash from recovery,"
-                              " eg. external_sd",
-                         dest="recovery_install_partition")
-    install.add_argument("--recovery-no-kernel",
-                         help="do not overwrite the existing kernel",
-                         action="store_false", dest="recovery_flash_kernel")
-    install.add_argument("--no-base",
-                         help="do not install postmarketos-base (advanced)",
-                         action="store_false", dest="install_base")
-    install.add_argument("--on-device-installer", "--ondev",
-                         action="store_true",
-                         help="wrap the resulting image in a graphical"
-                              " on-device installer, so the installation can"
-                              " be customized after flashing")
-    install.add_argument("--no-local-pkgs", dest="install_local_pkgs",
-                         help="do not install locally compiled packages and"
-                              " package signing keys", action="store_false")
-    install.add_argument("--no-recommends", dest="install_recommends",
-                         help="do not install packages listed in"
-                              " _pmb_recommends of the UI pmaports",
-                         action="store_false")
-    group = install.add_mutually_exclusive_group()
-    group.add_argument("--sparse", help="generate sparse image file"
-                       " (even if unsupported by device)", default=None,
-                       action="store_true")
-    group.add_argument("--no-sparse", help="do not generate sparse image file"
-                       " (even if supported by device)", dest="sparse",
-                       action="store_false")
+    arguments_install(sub)
 
     # Action: checksum
     checksum = sub.add_parser("checksum", help="update aport checksums")
