@@ -719,11 +719,14 @@ def install(args):
         steps = 5
 
     # Install required programs in native chroot
-    logging.info("*** (1/{}) PREPARE NATIVE CHROOT ***".format(steps))
+    step = 1
+    logging.info(f"*** ({step}/{steps}) PREPARE NATIVE CHROOT ***")
     pmb.chroot.apk.install(args, pmb.config.install_native_packages,
                            build=False)
+    step += 1
 
-    create_device_rootfs(args, 2, steps)
+    create_device_rootfs(args, step, steps)
+    step += 1
 
     if args.no_image:
         return
@@ -732,8 +735,8 @@ def install(args):
 
     if args.on_device_installer:
         # Runs install_system_image twice
-        install_on_device_installer(args, 3, steps)
+        install_on_device_installer(args, step, steps)
     else:
-        install_system_image(args, 0, f"rootfs_{args.device}",
-                             split=args.split, sdcard=args.sdcard)
+        install_system_image(args, 0, f"rootfs_{args.device}", step=step,
+                             steps=steps, split=args.split, sdcard=args.sdcard)
     print_flash_info(args, steps, steps)
