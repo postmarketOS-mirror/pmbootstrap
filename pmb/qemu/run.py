@@ -118,7 +118,7 @@ def command_qemu(args, arch, img_path):
     command += ["-smp", str(os.cpu_count())]
     command += ["-m", str(args.memory)]
 
-    command += ["-serial", "stdio"]
+    command += ["-serial", "mon:stdio"]
     command += ["-drive", "file=" + img_path + ",format=raw,if=virtio"]
     if args.qemu_tablet:
         command += ["-device", "virtio-tablet-pci"]
