@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import copy
+import os
 
 try:
     import argcomplete
@@ -20,6 +21,29 @@ import pmb.helpers.pmaports
     over the pmbootstrap code base.
 
     See pmb/helpers/args.py for more information about the args variable. """
+
+
+def type_ondev_cp(val):
+    """ Parse and validate arguments to 'pmbootstrap install --ondev --cp'.
+
+        :param val: 'HOST_SRC:CHROOT_DEST' string
+        :returns: (HOST_SRC, CHROOT_DEST) """
+    ret = val.split(":")
+
+    if len(ret) != 2:
+        raise argparse.ArgumentTypeError("does not have HOST_SRC:CHROOT_DEST"
+                                         f" format: {val}")
+    host_src = ret[0]
+    if not os.path.exists(host_src):
+        raise argparse.ArgumentTypeError(f"HOST_SRC not found: {host_src}")
+    if not os.path.isfile(host_src):
+        raise argparse.ArgumentTypeError(f"HOST_SRC is not a file: {host_src}")
+
+    chroot_dest = ret[1]
+    if not chroot_dest.startswith("/"):
+        raise argparse.ArgumentTypeError("CHROOT_DEST must start with '/':"
+                                         f" {chroot_dest}")
+    return ret
 
 
 def arguments_install(subparser):
@@ -119,6 +143,10 @@ def arguments_install(subparser):
     group.add_argument("--no-rootfs", dest="ondev_rootfs",
                        help="do not generate the postmarketOS rootfs to be"
                             " installed", action="store_false")
+    group.add_argument("--cp", dest="ondev_cp", nargs="+",
+                       metavar="HOST_SRC:CHROOT_DEST", type=type_ondev_cp,
+                       help="copy one or more files from the host system path"
+                            " HOST_SRC to the target path CHROOT_DEST")
 
 
 def arguments_export(subparser):

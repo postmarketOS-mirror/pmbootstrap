@@ -227,6 +227,8 @@ def install(args):
         if not args.ondev_rootfs:
             raise ValueError("--no-rootfs can only be combined with --ondev."
                              " Do you mean --no-image?")
+        if args.ondev_cp:
+            raise ValueError("--cp can only be combined with --ondev")
 
     # On-device installer overrides
     if args.on_device_installer:
