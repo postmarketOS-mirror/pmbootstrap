@@ -15,6 +15,9 @@ import pmb.parse
 import pmb.parse.arch
 
 
+stack = []
+
+
 def skip_already_built(args, pkgname, arch):
     """
     Check if the package was already built in this session, and add it
@@ -177,6 +180,23 @@ def is_necessary_warn_depends(args, apkbuild, arch, force, depends_built):
 
     logging.verbose(pkgname + ": build necessary: " + str(ret))
     return ret
+
+
+def stack_check_recursion(pkgname):
+    global stack
+
+    if pkgname not in stack:
+        return
+
+    msg = f"Recursion found while building '{stack[0]}'!\n\n"
+
+    msg += f"Package '{pkgname}' depends on itself:\n\n"
+    msg += f"{pkgname}\n"
+    for i in range(stack.index(pkgname) + 1, len(stack)):
+        msg += f"-> {stack[i]}\n"
+    msg += f"-> {pkgname}\n"
+
+    raise RuntimeError(msg)
 
 
 def init_buildenv(args, apkbuild, arch, strict=False, force=False, cross=None,
@@ -494,27 +514,47 @@ def package(args, pkgname, arch=None, force=False, strict=False,
     :returns: None if the build was not necessary
               output path relative to the packages folder ("armhf/ab-1-r2.apk")
     """
+    global stack
+
+    stack_check_recursion(pkgname)
+    stack.append(pkgname)
+    stack_str = f"[package build stack] {' -> '.join(stack)}"
+
     # Once per session is enough
     arch = arch or args.arch_native
+    logging.verbose(f"{stack_str}: evaluating")
     if skip_already_built(args, pkgname, arch):
+        logging.verbose(f"{stack_str}: skip build: skip_already_built")
+        stack.pop()
         return
 
     # Only build when APKBUILD exists
     apkbuild = get_apkbuild(args, pkgname, arch)
     if not apkbuild:
+        logging.verbose(f"{stack_str}: skip build: get_apkbuild")
+        stack.pop()
         return
 
     # Detect the build environment (skip unnecessary builds)
     if not check_build_for_arch(args, pkgname, arch):
+        logging.verbose(f"{stack_str}: skip build: check_build_for_arch")
+        stack.pop()
         return
     suffix = pmb.build.autodetect.suffix(args, apkbuild, arch)
     cross = pmb.build.autodetect.crosscompile(args, apkbuild, arch, suffix)
+    logging.verbose(f"{stack_str}: building dependencies")
     if not init_buildenv(args, apkbuild, arch, strict, force, cross, suffix,
                          skip_init_buildenv, src):
+        logging.verbose(f"{stack_str}: skip build: init_buildenv")
+        stack.pop()
         return
 
     # Build and finish up
+    logging.verbose(f"{stack_str}: building")
     (output, cmd, env) = run_abuild(args, apkbuild, arch, strict, force, cross,
                                     suffix, src)
     finish(args, apkbuild, arch, output, strict, suffix)
+
+    logging.verbose(f"{stack_str}: built successfully")
+    stack.pop()
     return output
