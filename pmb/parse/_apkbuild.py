@@ -357,3 +357,44 @@ def kernels(args, device):
     if ret:
         return ret
     return None
+
+
+def _parse_comment_tags(lines, tag):
+    """
+    Parse tags defined as comments in a APKBUILD file. This can be used to parse
+    e.g. the maintainers of a package (defined using # Maintainer:).
+
+    :param lines: lines of the APKBUILD
+    :param tag: the tag to parse, e.g. Maintainer
+    :returns: array of values of the tag, one per line
+    """
+    prefix = f'# {tag}:'
+    ret = []
+    for line in lines:
+        if line.startswith(prefix):
+            ret.append(line[len(prefix):].strip())
+    return ret
+
+
+def maintainers(path):
+    """
+    Parse maintainers of an APKBUILD file. They should be defined using
+    # Maintainer: (first maintainer) and # Co-Maintainer: (additional maintainers).
+
+    :param path: full path to the APKBUILD
+    :returns: array of (at least one) maintainer, or None
+    """
+    lines = read_file(path)
+    maintainers = _parse_comment_tags(lines, 'Maintainer')
+    if not maintainers:
+        return None
+
+    # An APKBUILD should only have one Maintainer:,
+    # in pmaports others should be defined using Co-Maintainer:
+    if len(maintainers) > 1:
+        raise RuntimeError("Multiple Maintainer: lines in APKBUILD")
+
+    maintainers += _parse_comment_tags(lines, 'Co-Maintainer')
+    if '' in maintainers:
+        raise RuntimeError("Empty (Co-)Maintainer: tag")
+    return maintainers

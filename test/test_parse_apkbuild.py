@@ -132,3 +132,13 @@ def test_variable_replacements(args):
     assert apkbuild["subpackages"]["replacements"] is None
     test_subpkg = apkbuild["subpackages"]["test"]
     assert test_subpkg["pkgdesc"] == "this should not affect variable replacement"
+
+
+def test_parse_maintainers(args):
+    path = pmb_test.const.testdata + "/apkbuild/APKBUILD.lint"
+    maintainers = [
+        "Oliver Smith <ollieparanoid@postmarketos.org>",
+        "Hello World <hello@world>"
+    ]
+
+    assert pmb.parse._apkbuild.maintainers(path) == maintainers

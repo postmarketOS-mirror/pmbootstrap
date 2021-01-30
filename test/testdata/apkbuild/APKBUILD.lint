@@ -1,5 +1,6 @@
 # APKBUILD to test 'pmbootstrap lint', used by test/test_helpers_lint.py
 # Maintainer: Oliver Smith <ollieparanoid@postmarketos.org>
+# Co-Maintainer: Hello World <hello@world>
 pkgname=hello-world
 pkgver=1
 pkgrel=5
