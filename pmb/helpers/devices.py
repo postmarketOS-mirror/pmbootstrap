@@ -23,14 +23,17 @@ def find_path(args, codename, file=''):
     return g[0]
 
 
-def list_codenames(args, vendor=None):
+def list_codenames(args, vendor=None, unmaintained=True):
     """
     Get all devices, for which aports are available
     :param vendor: vendor name to choose devices from, or None for all vendors
+    :param unmaintained: include unmaintained devices
     :returns: ["first-device", "second-device", ...]
     """
     ret = []
     for path in glob.glob(args.aports + "/device/*/device-*"):
+        if not unmaintained and '/unmaintained/' in path:
+            continue
         device = os.path.basename(path).split("-", 1)[1]
         if (vendor is None) or device.startswith(vendor + '-'):
             ret.append(device)

@@ -398,3 +398,17 @@ def maintainers(path):
     if '' in maintainers:
         raise RuntimeError("Empty (Co-)Maintainer: tag")
     return maintainers
+
+
+def unmaintained(path):
+    """
+    Return if (and why) an APKBUILD might be unmaintained. This should be defined
+    using a # Unmaintained: <reason> tag in the APKBUILD.
+
+    :param path: full path to the APKBUILD
+    :returns: reason why APKBUILD is unmaintained, or None
+    """
+    unmaintained = _parse_comment_tags(read_file(path), 'Unmaintained')
+    if not unmaintained:
+        return None
+    return '\n'.join(unmaintained)

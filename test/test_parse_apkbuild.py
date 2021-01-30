@@ -142,3 +142,8 @@ def test_parse_maintainers(args):
     ]
 
     assert pmb.parse._apkbuild.maintainers(path) == maintainers
+
+
+def test_parse_unmaintained(args):
+    path = pmb_test.const.testdata + "/apkbuild/APKBUILD.missing-pkgdesc-in-subpackage"
+    assert pmb.parse._apkbuild.unmaintained(path) == "This is broken!"

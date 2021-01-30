@@ -301,7 +301,8 @@ def ask_for_device(args):
             if not pmb.helpers.cli.confirm(args, default=True):
                 continue
         else:
-            devices = sorted(pmb.helpers.devices.list_codenames(args, vendor))
+            # Unmaintained devices can be selected, but are not displayed
+            devices = sorted(pmb.helpers.devices.list_codenames(args, vendor, unmaintained=False))
             # Remove "vendor-" prefixes from device list
             codenames = [x.split('-', 1)[1] for x in devices]
             logging.info("Available codenames (" + str(len(codenames)) + "): " +
@@ -314,7 +315,8 @@ def ask_for_device(args):
                                        codenames)
 
         device = vendor + '-' + codename
-        device_exists = pmb.helpers.devices.find_path(args, device, 'deviceinfo') is not None
+        device_path = pmb.helpers.devices.find_path(args, device, 'deviceinfo')
+        device_exists = device_path is not None
         if not device_exists:
             if device == args.device:
                 raise RuntimeError(
@@ -331,6 +333,12 @@ def ask_for_device(args):
             logging.info("Generating new aports for: {}...".format(device))
             pmb.aportgen.generate(args, "device-" + device)
             pmb.aportgen.generate(args, "linux-" + device)
+        elif "/unmaintained/" in device_path:
+            apkbuild = device_path[:-len("deviceinfo")] + 'APKBUILD'
+            unmaintained = pmb.parse._apkbuild.unmaintained(apkbuild)
+            logging.info(f"WARNING: {device} is unmaintained: {unmaintained}")
+            if not pmb.helpers.cli.confirm(args):
+                continue
         break
 
     kernel = ask_for_device_kernel(args, device)
